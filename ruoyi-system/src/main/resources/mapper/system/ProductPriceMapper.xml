@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.ProductPriceMapper">
+    
+    <resultMap type="ProductPrice" id="ProductPriceResult">
+        <result property="id"    column="id"    />
+        <result property="chatId"    column="chat_id"    />
+        <result property="isGroup"    column="is_group"    />
+        <result property="productName"    column="product_name"    />
+        <result property="price"    column="price"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectProductPriceVo">
+        select id, chat_id, is_group, product_name, price, create_by, create_time, update_by, update_time, remark from product_price
+    </sql>
+
+    <select id="selectProductPriceList" parameterType="ProductPrice" resultMap="ProductPriceResult">
+        <include refid="selectProductPriceVo"/>
+        <where>  
+            <if test="chatId != null "> and chat_id = #{chatId}</if>
+            <if test="isGroup != null "> and is_group = #{isGroup}</if>
+            <if test="productName != null  and productName != ''"> and product_name = #{productName} </if>
+            <if test="price != null "> and price = #{price}</if>
+        </where>
+    </select>
+    
+    <select id="selectProductPriceById" parameterType="Long" resultMap="ProductPriceResult">
+        <include refid="selectProductPriceVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertProductPrice" parameterType="ProductPrice" useGeneratedKeys="true" keyProperty="id">
+        insert into product_price(
+            <if test="chatId != null">chat_id,</if>
+            <if test="isGroup != null">is_group,</if>
+            <if test="productName != null and productName != ''">product_name,</if>
+            <if test="price != null">price,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="remark != null">remark,</if>
+        create_time
+        )values(
+            <if test="chatId != null">#{chatId},</if>
+            <if test="isGroup != null">#{isGroup},</if>
+            <if test="productName != null and productName != ''">#{productName},</if>
+            <if test="price != null">#{price},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+        sysdate()
+        )
+    </insert>
+
+    <update id="updateProductPrice" parameterType="ProductPrice">
+        update product_price
+        <set>
+            <if test="chatId != null">chat_id = #{chatId},</if>
+            <if test="isGroup != null">is_group = #{isGroup},</if>
+            <if test="productName != null and productName != ''">product_name = #{productName},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteProductPriceById" parameterType="Long">
+        delete from product_price where id = #{id}
+    </delete>
+
+    <delete id="deleteProductPriceByIds" parameterType="String">
+        delete from product_price where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectByChatAndProduct" resultMap="ProductPriceResult">
+        <include refid="selectProductPriceVo"/>
+        where chat_id = #{chatId}
+        and product_name = #{productName}
+        limit 1
+    </select>
+
+    <delete id="deleteByChatId" parameterType="Long">
+        delete from product_price where chat_id = #{chatId}
+    </delete>
+</mapper>

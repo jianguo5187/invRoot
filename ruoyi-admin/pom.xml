@@ -61,6 +61,13 @@
             <artifactId>ruoyi-generator</artifactId>
         </dependency>
 
+        <!-- telegram机器人-->
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots</artifactId>
+            <version>6.1.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>

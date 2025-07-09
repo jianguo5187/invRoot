@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.ProductInventoryMapper">
+    
+    <resultMap type="ProductInventory" id="ProductInventoryResult">
+        <result property="id"    column="id"    />
+        <result property="chatId"    column="chat_id"    />
+        <result property="isGroup"    column="is_group"    />
+        <result property="productName"    column="product_name"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectProductInventoryVo">
+        select id, chat_id, is_group, product_name, quantity, create_by, create_time, update_by, update_time, remark from product_inventory
+    </sql>
+
+    <select id="selectProductInventoryList" parameterType="ProductInventory" resultMap="ProductInventoryResult">
+        <include refid="selectProductInventoryVo"/>
+        <where>  
+            <if test="chatId != null "> and chat_id = #{chatId}</if>
+            <if test="isGroup != null "> and is_group = #{isGroup}</if>
+            <if test="productName != null  and productName != ''"> and product_name = #{productName} </if>
+            <if test="quantity != null "> and quantity = #{quantity}</if>
+        </where>
+    </select>
+    
+    <select id="selectProductInventoryById" parameterType="Long" resultMap="ProductInventoryResult">
+        <include refid="selectProductInventoryVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertProductInventory" parameterType="ProductInventory" useGeneratedKeys="true" keyProperty="id">
+        insert into product_inventory(
+            <if test="chatId != null">chat_id,</if>
+            <if test="isGroup != null">is_group,</if>
+            <if test="productName != null and productName != ''">product_name,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="remark != null">remark,</if>
+        create_time
+        )values(
+            <if test="chatId != null">#{chatId},</if>
+            <if test="isGroup != null">#{isGroup},</if>
+            <if test="productName != null and productName != ''">#{productName},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+        sysdate()
+        )
+    </insert>
+
+    <update id="updateProductInventory" parameterType="ProductInventory">
+        update product_inventory
+        <set>
+            <if test="chatId != null">chat_id = #{chatId},</if>
+            <if test="isGroup != null">is_group = #{isGroup},</if>
+            <if test="productName != null and productName != ''">product_name = #{productName},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteProductInventoryById" parameterType="Long">
+        delete from product_inventory where id = #{id}
+    </delete>
+
+    <delete id="deleteProductInventoryByIds" parameterType="String">
+        delete from product_inventory where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectByChatAndProduct" resultMap="ProductInventoryResult">
+        <include refid="selectProductInventoryVo"/>
+        where chat_id = #{chatId}
+        and product_name = #{productName}
+        limit 1
+    </select>
+
+    <delete id="deleteByChatId" parameterType="Long">
+        delete from product_inventory where chat_id = #{chatId}
+    </delete>
+
+    <resultMap type="com.ruoyi.system.domain.vo.CurrentInventoryRespVo" id="CurrentInventoryResult">
+        <result property="productName"    column="product_name"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="price"    column="price"    />
+        <result property="totalAmount"    column="total_amount"    />
+    </resultMap>
+
+    <select id="getCurrentInventory" resultMap="CurrentInventoryResult">
+        SELECT
+            pi.product_name AS product_name
+             ,pi.quantity AS quantity
+             ,pp.price AS price
+             ,pi.quantity * pp.price AS total_amount
+        FROM
+            `product_inventory` pi
+                INNER JOIN product_price pp ON pp.chat_id = pi.chat_id
+                AND pp.is_group = pi.is_group
+                AND pp.product_name = pi.product_name
+        WHERE
+            pi.chat_id = #{chatId}
+          AND pi.is_group = #{isGroup}
+    </select>
+</mapper>

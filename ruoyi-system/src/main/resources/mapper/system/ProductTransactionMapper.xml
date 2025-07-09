@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.ProductTransactionMapper">
+    
+    <resultMap type="ProductTransaction" id="ProductTransactionResult">
+        <result property="id"    column="id"    />
+        <result property="chatId"    column="chat_id"    />
+        <result property="isGroup"    column="is_group"    />
+        <result property="productName"    column="product_name"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="transactionTime"    column="transaction_time"    />
+        <result property="operator"    column="operator"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectProductTransactionVo">
+        select id, chat_id, is_group, product_name, quantity, transaction_time, operator, create_by, create_time, update_by, update_time, remark from product_transaction
+    </sql>
+
+    <select id="selectProductTransactionList" parameterType="ProductTransaction" resultMap="ProductTransactionResult">
+        <include refid="selectProductTransactionVo"/>
+        <where>  
+            <if test="chatId != null "> and chat_id = #{chatId}</if>
+            <if test="isGroup != null "> and is_group = #{isGroup}</if>
+            <if test="productName != null  and productName != ''"> and product_name = #{productName} </if>
+            <if test="quantity != null "> and quantity = #{quantity}</if>
+            <if test="transactionTime != null "> and transaction_time = #{transactionTime}</if>
+            <if test="operator != null  and operator != ''"> and operator = #{operator}</if>
+        </where>
+    </select>
+    
+    <select id="selectProductTransactionById" parameterType="Long" resultMap="ProductTransactionResult">
+        <include refid="selectProductTransactionVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertProductTransaction" parameterType="ProductTransaction" useGeneratedKeys="true" keyProperty="id">
+        insert into product_transaction(
+            <if test="chatId != null">chat_id,</if>
+            <if test="isGroup != null">is_group,</if>
+            <if test="productName != null and productName != ''">product_name,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="transactionTime != null">transaction_time,</if>
+            <if test="operator != null">operator,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="remark != null">remark,</if>
+        create_time
+        )values(
+            <if test="chatId != null">#{chatId},</if>
+            <if test="isGroup != null">#{isGroup},</if>
+            <if test="productName != null and productName != ''">#{productName},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="transactionTime != null">#{transactionTime},</if>
+            <if test="operator != null">#{operator},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+        sysdate()
+        )
+    </insert>
+
+    <update id="updateProductTransaction" parameterType="ProductTransaction">
+        update product_transaction
+        <set>
+            <if test="chatId != null">chat_id = #{chatId},</if>
+            <if test="isGroup != null">is_group = #{isGroup},</if>
+            <if test="productName != null and productName != ''">product_name = #{productName},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="transactionTime != null">transaction_time = #{transactionTime},</if>
+            <if test="operator != null">operator = #{operator},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteProductTransactionById" parameterType="Long">
+        delete from product_transaction where id = #{id}
+    </delete>
+
+    <delete id="deleteProductTransactionByIds" parameterType="String">
+        delete from product_transaction where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteByChatId" parameterType="Long">
+        delete from product_transaction where chat_id = #{chatId}
+    </delete>
+
+    <resultMap type="com.ruoyi.system.domain.vo.TodayProductTransactionRespVo" id="TodayProductTransactionResult">
+        <result property="productName"    column="product_name"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="price"    column="price"    />
+        <result property="totalAmount"    column="total_amount"    />
+    </resultMap>
+
+    <select id="selectTodayProductTransactionList" resultMap="TodayProductTransactionResult">
+        SELECT
+            pt.product_name AS product_name
+             ,sum( pt.quantity ) AS quantity
+             ,pp.price AS price
+             ,sum( pt.quantity )* pp.price AS total_amount
+        FROM
+            `product_transaction` pt
+        INNER JOIN product_price pp ON pp.chat_id = pt.chat_id
+        AND pp.is_group = pt.is_group
+        AND pp.product_name = pt.product_name
+        AND DATE_FORMAT( pt.transaction_time - INTERVAL 12 HOUR, '%y%m%d' ) = DATE_FORMAT( NOW()- INTERVAL 12 HOUR, '%y%m%d' )
+        WHERE
+            pt.chat_id = #{chatId}
+        AND pt.is_group = #{isGroup}
+        GROUP BY
+            pt.chat_id
+           ,pt.is_group
+           ,pt.product_name
+           ,pp.price
+    </select>
+
+    <select id="selectProductTransactionHistoryList" resultMap="TodayProductTransactionResult">
+        SELECT
+            pt.product_name AS product_name
+             ,sum( pt.quantity ) AS quantity
+             ,pp.price AS price
+             ,sum( pt.quantity )* pp.price AS total_amount
+        FROM
+            `product_transaction` pt
+        INNER JOIN product_price pp ON pp.chat_id = pt.chat_id
+        AND pp.is_group = pt.is_group
+        AND pp.product_name = pt.product_name
+        WHERE
+            pt.chat_id = #{chatId}
+        AND pt.is_group = #{isGroup}
+        AND DATE_FORMAT( pt.transaction_time - INTERVAL 12 HOUR, '%Y-%m-%d' ) = #{transactionDate}
+        GROUP BY
+            pt.chat_id
+           ,pt.is_group
+           ,pt.product_name
+           ,pp.price
+    </select>
+</mapper>
