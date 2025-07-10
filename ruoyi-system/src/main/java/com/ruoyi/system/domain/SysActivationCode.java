@@ -32,6 +32,14 @@ public class SysActivationCode extends BaseEntity
     @Excel(name = "Telegram用户ID")
     private Long telegramId;
 
+    /** Telegram用户名称 */
+    @Excel(name = "Telegram用户名称")
+    private String telegramName;
+
+    /** 是否群组（0 私聊 1群组） */
+    @Excel(name = "是否群组")
+    private String isGroup;
+
     /** 状态（0未使用 1已使用） */
     @Excel(name = "状态", readConverterExp = "0=未使用,1=已使用")
     private String status;
@@ -81,7 +89,25 @@ public class SysActivationCode extends BaseEntity
         return telegramId;
     }
 
-    public void setStatus(String status) 
+    public String getTelegramName() {
+        return telegramName;
+    }
+
+    public void setTelegramName(String telegramName) {
+        this.telegramName = telegramName;
+    }
+
+    public void setIsGroup(String isGroup)
+    {
+        this.isGroup = isGroup;
+    }
+
+    public String getIsGroup()
+    {
+        return isGroup;
+    }
+
+    public void setStatus(String status)
     {
         this.status = status;
     }
@@ -108,6 +134,8 @@ public class SysActivationCode extends BaseEntity
             .append("code", getCode())
             .append("userId", getUserId())
             .append("telegramId", getTelegramId())
+            .append("telegramName", getTelegramName())
+            .append("isGroup", getIsGroup())
             .append("status", getStatus())
             .append("expireTime", getExpireTime())
             .append("createBy", getCreateBy())

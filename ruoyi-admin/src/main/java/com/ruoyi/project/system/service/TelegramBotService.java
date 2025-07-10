@@ -93,7 +93,13 @@ public class TelegramBotService extends TelegramLongPollingBot {
         String callbackData = callbackQuery.getData();
         long chatId = callbackQuery.getMessage().getChatId();
         boolean isGroup = isGroupMessage(callbackQuery.getMessage());
-        String userName = callbackQuery.getFrom().getUserName();
+//        String userName = callbackQuery.getFrom().getUserName();
+        String userName = "";
+        if(isGroup){
+            userName = callbackQuery.getMessage().getChat().getTitle();
+        }else{
+            userName = callbackQuery.getMessage().getFrom().getFirstName();
+        }
 
         // 检查激活状态（群组除外）
         if (!isGroup && activationEnabled && !isUserActivated(chatId)) {
@@ -165,7 +171,12 @@ public class TelegramBotService extends TelegramLongPollingBot {
         String messageText = update.getMessage().getText().trim();
         long chatId = update.getMessage().getChatId();
         boolean isGroup = isGroupMessage(update.getMessage());
-        String userName = update.getMessage().getFrom().getUserName();
+        String userName = "";
+        if(isGroup){
+            userName = update.getMessage().getChat().getTitle();
+        }else{
+            userName = update.getMessage().getFrom().getFirstName();
+        }
         // 处理状态输入
         String userKey = getUserKey(chatId, isGroup);
         String userState = userStates.get(userKey);
@@ -173,7 +184,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
         // 处理激活命令
         if (activationEnabled && messageText.startsWith("/activate")) {
             if(!isUserActivated(chatId)){
-                handleActivation(chatId, isGroup, messageText);
+                handleActivation(chatId, userName, isGroup, messageText);
             }else{
                 showMainMenu(chatId);
             }
@@ -190,7 +201,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             switch (userState) {
                 case "AWAITING_ACTIVATION_CODE":
 //                    if(!isGroup){
-                        processActivationCode(chatId, isGroup, messageText);
+                        processActivationCode(chatId, userName, isGroup, messageText);
 //                    }
                     return;
                 case "AWAITING_PRODUCT_PRICE":
@@ -218,17 +229,17 @@ public class TelegramBotService extends TelegramLongPollingBot {
         return isGroup ? "group_" + chatId : "user_" + chatId;
     }
 
-    private void handleActivation(long chatId, boolean isGroup, String message) {
+    private void handleActivation(long chatId, String chatName, boolean isGroup, String message) {
         String[] parts = message.split(" ");
         if (parts.length == 1) {
             userStates.put(getUserKey(chatId, isGroup), "AWAITING_ACTIVATION_CODE");
             sendResponse(chatId, "📝 请输入您的激活码：");
         } else {
-            processActivationCode(chatId, isGroup, parts[1]);
+            processActivationCode(chatId, chatName, isGroup, parts[1]);
         }
     }
 
-    private void processActivationCode(long chatId, boolean isGroup, String code) {
+    private void processActivationCode(long chatId, String chatName, boolean isGroup, String code) {
         try {
             SysActivationCode activationCode = activationCodeService.selectByCode(code);
 
@@ -242,6 +253,8 @@ public class TelegramBotService extends TelegramLongPollingBot {
             } else {
                 activationCode.setStatus("1");
                 activationCode.setTelegramId(chatId);
+                activationCode.setTelegramName(chatName);
+                activationCode.setIsGroup(isGroup?"1":"0");
                 activationCodeService.updateActivationCode(activationCode);
                 userStates.remove(getUserKey(chatId, isGroup)); // 处理完成后移除状态
                 sendResponse(chatId, "✅ 激活成功！您现在可以使用所有功能了");

@@ -20,30 +20,6 @@
           />
         </el-select>
       </el-form-item>
-<!--      <el-form-item label="绑定用户ID" prop="userId">-->
-<!--        <el-input-->
-<!--          v-model="queryParams.userId"-->
-<!--          placeholder="请输入绑定用户ID"-->
-<!--          clearable-->
-<!--          @keyup.enter.native="handleQuery"-->
-<!--        />-->
-<!--      </el-form-item>-->
-<!--      <el-form-item label="Telegram用户ID" prop="telegramId">-->
-<!--        <el-input-->
-<!--          v-model="queryParams.telegramId"-->
-<!--          placeholder="请输入Telegram用户ID"-->
-<!--          clearable-->
-<!--          @keyup.enter.native="handleQuery"-->
-<!--        />-->
-<!--      </el-form-item>-->
-<!--      <el-form-item label="过期时间" prop="expireTime">-->
-<!--        <el-date-picker clearable-->
-<!--          v-model="queryParams.expireTime"-->
-<!--          type="date"-->
-<!--          value-format="yyyy-MM-dd"-->
-<!--          placeholder="请选择过期时间">-->
-<!--        </el-date-picker>-->
-<!--      </el-form-item>-->
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -60,77 +36,34 @@
           @click="handleAdd"
         >生成激活码</el-button>
       </el-col>
-<!--      <el-col :span="1.5">-->
-<!--        <el-button-->
-<!--          type="success"-->
-<!--          plain-->
-<!--          icon="el-icon-edit"-->
-<!--          size="mini"-->
-<!--          :disabled="single"-->
-<!--          @click="handleUpdate"-->
-<!--          v-hasPermi="['system:code:edit']"-->
-<!--        >修改</el-button>-->
-<!--      </el-col>-->
-<!--      <el-col :span="1.5">-->
-<!--        <el-button-->
-<!--          type="danger"-->
-<!--          plain-->
-<!--          icon="el-icon-delete"-->
-<!--          size="mini"-->
-<!--          :disabled="multiple"-->
-<!--          @click="handleDelete"-->
-<!--          v-hasPermi="['system:code:remove']"-->
-<!--        >删除</el-button>-->
-<!--      </el-col>-->
-<!--      <el-col :span="1.5">-->
-<!--        <el-button-->
-<!--          type="warning"-->
-<!--          plain-->
-<!--          icon="el-icon-download"-->
-<!--          size="mini"-->
-<!--          @click="handleExport"-->
-<!--          v-hasPermi="['system:code:export']"-->
-<!--        >导出</el-button>-->
-<!--      </el-col>-->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="codeList" @selection-change="handleSelectionChange">
-<!--      <el-table-column type="selection" width="55" align="center" />-->
       <el-table-column label="主键ID" align="center" prop="id" />
       <el-table-column label="激活码" align="center" prop="code" />
-<!--      <el-table-column label="绑定用户ID" align="center" prop="userId" />-->
       <el-table-column label="Telegram用户ID" align="center" prop="telegramId" />
-<!--      <el-table-column label="状态" align="center" prop="status" />-->
+      <el-table-column label="Telegram用户名称" align="center" prop="telegramName" />
+      <el-table-column label="Telegram绑定类型" align="center" prop="isGroup">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_activation_code_group" :value="scope.row.isGroup"/>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_activation_code_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
-<!--      <el-table-column label="过期时间" align="center" prop="expireTime" width="180">-->
-<!--        <template slot-scope="scope">-->
-<!--          <span>{{ parseTime(scope.row.expireTime, '{y}-{m}-{d}') }}</span>-->
-<!--        </template>-->
-<!--      </el-table-column>-->
-<!--      <el-table-column label="备注" align="center" prop="remark" />-->
-<!--      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">-->
-<!--        <template slot-scope="scope">-->
-<!--          <el-button-->
-<!--            size="mini"-->
-<!--            type="text"-->
-<!--            icon="el-icon-edit"-->
-<!--            @click="handleUpdate(scope.row)"-->
-<!--            v-hasPermi="['system:code:edit']"-->
-<!--          >修改</el-button>-->
-<!--          <el-button-->
-<!--            size="mini"-->
-<!--            type="text"-->
-<!--            icon="el-icon-delete"-->
-<!--            @click="handleDelete(scope.row)"-->
-<!--            v-hasPermi="['system:code:remove']"-->
-<!--          >删除</el-button>-->
-<!--        </template>-->
-<!--      </el-table-column>-->
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-delete"
+            @click="handleDelete(scope.row)"
+          >删除</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <pagination
@@ -147,23 +80,9 @@
         <el-form-item label="激活码" prop="code">
           <el-input v-model="form.code" placeholder="请输入激活码" />
         </el-form-item>
-<!--        <el-form-item label="绑定用户ID" prop="userId">-->
-<!--          <el-input v-model="form.userId" placeholder="请输入绑定用户ID" />-->
-<!--        </el-form-item>-->
         <el-form-item label="Telegram用户ID" prop="telegramId">
           <el-input v-model="form.telegramId" placeholder="请输入Telegram用户ID" disabled />
         </el-form-item>
-<!--        <el-form-item label="过期时间" prop="expireTime">-->
-<!--          <el-date-picker clearable-->
-<!--            v-model="form.expireTime"-->
-<!--            type="date"-->
-<!--            value-format="yyyy-MM-dd"-->
-<!--            placeholder="请选择过期时间">-->
-<!--          </el-date-picker>-->
-<!--        </el-form-item>-->
-<!--        <el-form-item label="备注" prop="remark">-->
-<!--          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />-->
-<!--        </el-form-item>-->
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -178,7 +97,7 @@ import {listCode, getCode, delCode, addCode, updateCode, addActivationCode} from
 
 export default {
   name: "Code",
-  dicts: ['sys_activation_code_status'],
+  dicts: ['sys_activation_code_status','sys_activation_code_group'],
   data() {
     return {
       // 遮罩层
