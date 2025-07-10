@@ -429,7 +429,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 todayQtySum += t.getQuantity();
                 todayAmountSum += t.getTotalAmount();
             }
-            response.append(String.format("共计 | %.0f |  | %.2f\n", todayQtySum, todayAmountSum));
+            response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
 //            response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
 //            sendResponse(chatId, response.toString());
             userStates.remove(userKey); // 只有成功时才移除状态
@@ -524,7 +524,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             todayAmountSum += t.getTotalAmount();
         }
 //        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
-        response.append(String.format("共计 | %.0f |  | %.2f\n", todayQtySum, todayAmountSum));
+        response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
         sendResponse(chatId, response.toString());
     }
 
@@ -568,7 +568,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 todayAmountSum += t.getTotalAmount();
             }
 //            response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
-            response.append(String.format("共计 | %.0f |  | %.2f\n", todayQtySum, todayAmountSum));
+            response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
             sendResponse(chatId, response.toString());
             userStates.remove(userKey); // 查询完成后移除状态
         } catch (java.time.format.DateTimeParseException e) {
@@ -605,7 +605,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             todayAmountSum += t.getTotalAmount();
         }
 //        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");/**/
-        response.append(String.format("共计 | %.0f |  | %.2f\n", todayQtySum, todayAmountSum));
+        response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
 
         sendResponse(chatId, response.toString());
     }
