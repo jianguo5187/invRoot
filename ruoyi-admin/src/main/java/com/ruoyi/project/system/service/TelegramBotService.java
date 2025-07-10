@@ -119,18 +119,18 @@ public class TelegramBotService extends TelegramLongPollingBot {
                     sendResponse(chatId, "📝 请输入商品定价（可多行，每行一个商品）\n" +
                             "格式：商品名称,价格\n" +
                             "示例：\n" +
-                            "苹果，5.5\n" +
-                            "香蕉，3.2\n" +
-                            "牛奶，12.8");
+                            "苹果，5\n" +
+                            "香蕉，3\n" +
+                            "牛奶，12");
                     break;
                 case "in_out":
                     userStates.put(getUserKey(chatId, isGroup), "AWAITING_PRODUCT_QUANTITY");
                     sendResponse(chatId, "📝 请输入商品入出库记录（可多行，每行一个商品）\n" +
                             "格式：商品名称，数量（正数入库，负数出库）\n" +
                             "示例：\n" +
-                            "苹果，10\n" +
-                            "香蕉，-5\n" +
-                            "牛奶，20");
+                            "苹果，10.3\n" +
+                            "香蕉，-5.6\n" +
+                            "牛奶，20.6");
                     break;
 //                case "in_out":
 //                    userStates.put(getUserKey(chatId, isGroup), "AWAITING_PRODUCT_QUANTITY");
@@ -271,7 +271,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         // 验证至少有一行数据
         if (lines.length == 0) {
-            sendResponse(chatId, "❌ 请输入至少一个商品定价\n格式：商品名称,价格\n例如：\n苹果，5.5\n西瓜，5.5");
+            sendResponse(chatId, "❌ 请输入至少一个商品定价\n格式：商品名称,价格\n例如：\n苹果，5\n西瓜，5");
             userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
             return;
         }
@@ -354,7 +354,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         // 验证至少有一行数据
         if (lines.length == 0) {
-            sendResponse(chatId, "❌ 请输入至少一条入出库记录\n格式：商品名称，数量\n示例：\n苹果，10\n香蕉，-5");
+            sendResponse(chatId, "❌ 请输入至少一条入出库记录\n格式：商品名称，数量\n示例：\n苹果，10.2\n香蕉，-5.8");
             userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
             return;
         }
@@ -415,7 +415,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             Double todayAmountSum = 0.00;
             for(TodayProductTransactionRespVo t : todayList){
 
-                response.append(String.format("%s | %.2f | %.2f | %.2f\n",
+                response.append(String.format("%s | %.2f | %.0f | %.2f\n",
                         t.getProductName(),
                         t.getQuantity(),
                         t.getPrice(),
@@ -429,7 +429,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 todayQtySum += t.getQuantity();
                 todayAmountSum += t.getTotalAmount();
             }
-            response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
+            response.append(String.format("共计 | %.0f |  | %.2f\n", todayQtySum, todayAmountSum));
 //            response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
 //            sendResponse(chatId, response.toString());
             userStates.remove(userKey); // 只有成功时才移除状态
@@ -509,7 +509,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
         Double todayAmountSum = 0.00;
         for(TodayProductTransactionRespVo t : todayList){
 
-            response.append(String.format("%s | %.2f | %.2f | %.2f\n",
+            response.append(String.format("%s | %.2f | %.0f | %.2f\n",
                     t.getProductName(),
                     t.getQuantity(),
                     t.getPrice(),
@@ -524,7 +524,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             todayAmountSum += t.getTotalAmount();
         }
 //        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
-        response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
+        response.append(String.format("共计 | %.0f |  | %.2f\n", todayQtySum, todayAmountSum));
         sendResponse(chatId, response.toString());
     }
 
@@ -553,7 +553,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             Double todayAmountSum = 0.00;
             for(TodayProductTransactionRespVo t : history){
 
-                response.append(String.format("%s | %.2f | %.2f | %.2f\n",
+                response.append(String.format("%s | %.2f | %.0f | %.2f\n",
                         t.getProductName(),
                         t.getQuantity(),
                         t.getPrice(),
@@ -568,7 +568,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 todayAmountSum += t.getTotalAmount();
             }
 //            response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
-            response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
+            response.append(String.format("共计 | %.0f |  | %.2f\n", todayQtySum, todayAmountSum));
             sendResponse(chatId, response.toString());
             userStates.remove(userKey); // 查询完成后移除状态
         } catch (java.time.format.DateTimeParseException e) {
@@ -590,7 +590,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
         Double todayAmountSum = 0.00;
         for(CurrentInventoryRespVo t : stockList){
 
-            response.append(String.format("%s | %.2f | %.2f | %.2f\n",
+            response.append(String.format("%s | %.2f | %.0f | %.2f\n",
                     t.getProductName(),
                     t.getQuantity(),
                     t.getPrice(),
@@ -605,7 +605,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             todayAmountSum += t.getTotalAmount();
         }
 //        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");/**/
-        response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
+        response.append(String.format("共计 | %.0f |  | %.2f\n", todayQtySum, todayAmountSum));
 
         sendResponse(chatId, response.toString());
     }
