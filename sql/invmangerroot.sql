@@ -11,7 +11,7 @@
  Target Server Version : 50650 (5.6.50-log)
  File Encoding         : 65001
 
- Date: 09/07/2025 23:03:56
+ Date: 10/07/2025 22:38:32
 */
 
 SET NAMES utf8mb4;
@@ -137,10 +137,11 @@ INSERT INTO `gen_table_column` VALUES (53, 5, 'remark', '备注', 'varchar(500)'
 DROP TABLE IF EXISTS `product_inventory`;
 CREATE TABLE `product_inventory`  (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `robot_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '机器人ID',
   `chat_id` bigint(20) NOT NULL COMMENT '群组或私聊ID',
   `is_group` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否群组',
   `product_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '商品名称',
-  `quantity` int(11) NOT NULL DEFAULT 0 COMMENT '库存数量',
+  `quantity` decimal(10, 2) NOT NULL DEFAULT 0.00 COMMENT '库存数量',
   `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '' COMMENT '创建者',
   `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '' COMMENT '更新者',
@@ -160,6 +161,7 @@ CREATE TABLE `product_inventory`  (
 DROP TABLE IF EXISTS `product_price`;
 CREATE TABLE `product_price`  (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `robot_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '机器人ID',
   `chat_id` bigint(20) NOT NULL COMMENT '群组或私聊ID',
   `is_group` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否群组',
   `product_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '商品名称',
@@ -183,10 +185,11 @@ CREATE TABLE `product_price`  (
 DROP TABLE IF EXISTS `product_transaction`;
 CREATE TABLE `product_transaction`  (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `robot_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '机器人ID',
   `chat_id` bigint(20) NOT NULL COMMENT '群组或私聊ID',
   `is_group` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否群组',
   `product_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '商品名称',
-  `quantity` int(11) NOT NULL COMMENT '数量(正数入库，负数出库)',
+  `quantity` decimal(10, 2) NOT NULL COMMENT '数量(正数入库，负数出库)',
   `transaction_time` datetime NOT NULL COMMENT '交易时间',
   `operator` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '操作人',
   `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '' COMMENT '创建者',

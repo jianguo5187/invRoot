@@ -6,6 +6,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <resultMap type="ProductTransaction" id="ProductTransactionResult">
         <result property="id"    column="id"    />
+        <result property="robotId"    column="robot_id"    />
         <result property="chatId"    column="chat_id"    />
         <result property="isGroup"    column="is_group"    />
         <result property="productName"    column="product_name"    />
@@ -20,12 +21,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectProductTransactionVo">
-        select id, chat_id, is_group, product_name, quantity, transaction_time, operator, create_by, create_time, update_by, update_time, remark from product_transaction
+        select id, robot_id, chat_id, is_group, product_name, quantity, transaction_time, operator, create_by, create_time, update_by, update_time, remark from product_transaction
     </sql>
 
     <select id="selectProductTransactionList" parameterType="ProductTransaction" resultMap="ProductTransactionResult">
         <include refid="selectProductTransactionVo"/>
-        <where>  
+        <where>
+            <if test="robotId != null "> and robot_id = #{robotId}</if>
             <if test="chatId != null "> and chat_id = #{chatId}</if>
             <if test="isGroup != null "> and is_group = #{isGroup}</if>
             <if test="productName != null  and productName != ''"> and product_name = #{productName} </if>
@@ -42,6 +44,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <insert id="insertProductTransaction" parameterType="ProductTransaction" useGeneratedKeys="true" keyProperty="id">
         insert into product_transaction(
+            <if test="robotId != null">robot_id,</if>
             <if test="chatId != null">chat_id,</if>
             <if test="isGroup != null">is_group,</if>
             <if test="productName != null and productName != ''">product_name,</if>
@@ -52,6 +55,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="remark != null">remark,</if>
         create_time
         )values(
+            <if test="robotId != null">#{robotId},</if>
             <if test="chatId != null">#{chatId},</if>
             <if test="isGroup != null">#{isGroup},</if>
             <if test="productName != null and productName != ''">#{productName},</if>
@@ -67,6 +71,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <update id="updateProductTransaction" parameterType="ProductTransaction">
         update product_transaction
         <set>
+            <if test="robotId != null">robot_id = #{robotId},</if>
             <if test="chatId != null">chat_id = #{chatId},</if>
             <if test="isGroup != null">is_group = #{isGroup},</if>
             <if test="productName != null and productName != ''">product_name = #{productName},</if>
@@ -91,8 +96,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
-    <delete id="deleteByChatId" parameterType="Long">
-        delete from product_transaction where chat_id = #{chatId}
+    <delete id="deleteByChatId">
+        delete from product_transaction where robot_id = #{robotId} AND chat_id = #{chatId}
     </delete>
 
     <resultMap type="com.ruoyi.system.domain.vo.TodayProductTransactionRespVo" id="TodayProductTransactionResult">
@@ -110,15 +115,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
              ,sum( pt.quantity )* pp.price AS total_amount
         FROM
             `product_transaction` pt
-        INNER JOIN product_price pp ON pp.chat_id = pt.chat_id
+        INNER JOIN product_price pp ON pp.robot_id = pt.robot_id
+        AND pp.chat_id = pt.chat_id
         AND pp.is_group = pt.is_group
         AND pp.product_name = pt.product_name
         AND DATE_FORMAT( pt.transaction_time - INTERVAL 12 HOUR, '%y%m%d' ) = DATE_FORMAT( NOW()- INTERVAL 12 HOUR, '%y%m%d' )
         WHERE
-            pt.chat_id = #{chatId}
+            pt.robot_id = #{robotId}
+        AND pt.chat_id = #{chatId}
         AND pt.is_group = #{isGroup}
         GROUP BY
-            pt.chat_id
+            pt.robot_id
+           ,pt.chat_id
            ,pt.is_group
            ,pt.product_name
            ,pp.price
@@ -132,15 +140,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
              ,sum( pt.quantity )* pp.price AS total_amount
         FROM
             `product_transaction` pt
-        INNER JOIN product_price pp ON pp.chat_id = pt.chat_id
+        INNER JOIN product_price pp ON pp.robot_id = pt.robot_id
+        AND pp.chat_id = pt.chat_id
         AND pp.is_group = pt.is_group
         AND pp.product_name = pt.product_name
         WHERE
-            pt.chat_id = #{chatId}
+            pt.robot_id = #{robotId}
+        AND pt.chat_id = #{chatId}
         AND pt.is_group = #{isGroup}
         AND DATE_FORMAT( pt.transaction_time - INTERVAL 12 HOUR, '%Y-%m-%d' ) = #{transactionDate}
         GROUP BY
-            pt.chat_id
+            pt.robot_id
+           ,pt.chat_id
            ,pt.is_group
            ,pt.product_name
            ,pp.price

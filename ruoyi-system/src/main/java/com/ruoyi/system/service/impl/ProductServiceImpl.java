@@ -26,8 +26,9 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     @Transactional
-    public boolean setProductPrice(Long chatId, Boolean isGroup, String productName, Double price) {
+    public boolean setProductPrice(String robotId, Long chatId, Boolean isGroup, String productName, Double price) {
         ProductPrice priceRecord = new ProductPrice();
+        priceRecord.setRobotId(robotId);
         priceRecord.setChatId(chatId);
         priceRecord.setIsGroup(isGroup);
         priceRecord.setProductName(productName);
@@ -36,7 +37,7 @@ public class ProductServiceImpl implements IProductService {
         priceRecord.setUpdateTime(new Date());
 
         // 先检查是否已存在
-        ProductPrice existing = priceMapper.selectByChatAndProduct(chatId, productName);
+        ProductPrice existing = priceMapper.selectByChatAndProduct(robotId, chatId, productName);
         if (existing != null) {
             existing.setPrice(price);
             existing.setUpdateTime(new Date());
@@ -48,11 +49,12 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     @Transactional
-    public boolean processInventory(Long chatId, Boolean isGroup, String productName, Integer quantity, String operator) {
+    public boolean processInventory(String robotId, Long chatId, Boolean isGroup, String productName, Double quantity, String operator) {
         // 1. 更新库存
-        ProductInventory inventory = inventoryMapper.selectByChatAndProduct(chatId, productName);
+        ProductInventory inventory = inventoryMapper.selectByChatAndProduct(robotId, chatId, productName);
         if (inventory == null) {
             inventory = new ProductInventory();
+            inventory.setRobotId(robotId);
             inventory.setChatId(chatId);
             inventory.setIsGroup(isGroup);
             inventory.setProductName(productName);
@@ -69,6 +71,7 @@ public class ProductServiceImpl implements IProductService {
 
         // 2. 记录交易
         ProductTransaction transaction = new ProductTransaction();
+        transaction.setRobotId(robotId);
         transaction.setChatId(chatId);
         transaction.setIsGroup(isGroup);
         transaction.setProductName(productName);
@@ -81,60 +84,61 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<TodayProductTransactionRespVo> getTodayTransactions(Long chatId, Boolean isGroup) {
-        return transactionMapper.selectTodayProductTransactionList(chatId,isGroup);
+    public List<TodayProductTransactionRespVo> getTodayTransactions(String robotId, Long chatId, Boolean isGroup) {
+        return transactionMapper.selectTodayProductTransactionList(robotId, chatId,isGroup);
     }
 
     @Override
-    public List<TodayProductTransactionRespVo> getTransactionHistory(Long chatId, Boolean isGroup, String historyDate) {
+    public List<TodayProductTransactionRespVo> getTransactionHistory(String robotId, Long chatId, Boolean isGroup, String historyDate) {
 //        ProductTransaction searchProductTransaction =  new ProductTransaction();
 //        searchProductTransaction.setChatId(chatId);
 //        searchProductTransaction.setIsGroup(isGroup);
 //        searchProductTransaction.setProductName(productName);
-        return transactionMapper.selectProductTransactionHistoryList(chatId,isGroup,historyDate);
+        return transactionMapper.selectProductTransactionHistoryList(robotId, chatId,isGroup,historyDate);
     }
 
     @Override
-    public List<CurrentInventoryRespVo> getCurrentInventory(Long chatId, Boolean isGroup) {
+    public List<CurrentInventoryRespVo> getCurrentInventory(String robotId, Long chatId, Boolean isGroup) {
 //        ProductInventory searchProductInventory = new ProductInventory();
 //        searchProductInventory.setChatId(chatId);
 //        searchProductInventory.setIsGroup(isGroup);
-        return inventoryMapper.getCurrentInventory(chatId,isGroup);
+        return inventoryMapper.getCurrentInventory(robotId, chatId,isGroup);
     }
 
     @Override
     @Transactional
-    public boolean deleteAllData(Long chatId, Boolean isGroup) {
-        transactionMapper.deleteByChatId(chatId);
-        inventoryMapper.deleteByChatId(chatId);
-        priceMapper.deleteByChatId(chatId);
+    public boolean deleteAllData(String robotId, Long chatId, Boolean isGroup) {
+        transactionMapper.deleteByChatId(robotId, chatId);
+        inventoryMapper.deleteByChatId(robotId, chatId);
+        priceMapper.deleteByChatId(robotId, chatId);
         return true;
     }
 
     @Override
-    public Double getProductPrice(Long chatId, Boolean isGroup, String productName) {
-        ProductPrice price = priceMapper.selectByChatAndProduct(chatId, productName);
+    public Double getProductPrice(String robotId, Long chatId, Boolean isGroup, String productName) {
+        ProductPrice price = priceMapper.selectByChatAndProduct(robotId, chatId, productName);
         return price != null ? price.getPrice() : null;
     }
 
     @Override
-    public String inventoryPreCheck(Long chatId, Boolean isGroup, String productName, Integer quantity){
+    public String inventoryPreCheck(String robotId, Long chatId, Boolean isGroup, String productName, Double quantity){
         String checkResult = "";
 
         // 先检查商品是否已存在
-        ProductPrice existing = priceMapper.selectByChatAndProduct(chatId, productName);
+        ProductPrice existing = priceMapper.selectByChatAndProduct(robotId, chatId, productName);
         if (existing == null) {
             checkResult = "商品不存在，请先给商品定价";
             return checkResult;
         }
 
         // 获取当前库存
-        Integer nowInvQty = 0;
-        ProductInventory inventory = inventoryMapper.selectByChatAndProduct(chatId, productName);
+        Double nowInvQty = 0.00;
+        ProductInventory inventory = inventoryMapper.selectByChatAndProduct(robotId, chatId, productName);
         if(inventory != null){
             nowInvQty = inventory.getQuantity();
         }
-        if((nowInvQty + quantity) < 0){
+        Double checkQty = nowInvQty + quantity;
+        if(checkQty.compareTo(0.00) < 0){
             checkResult = "出库所需库存不足，当前在库数量：" + nowInvQty;
             return checkResult;
         }

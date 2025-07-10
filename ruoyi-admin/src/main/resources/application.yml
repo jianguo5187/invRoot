@@ -131,11 +131,11 @@ xss:
 
 telegram:
   bot:
-#    username: invLiaoTestBot  # 替换为你的机器人用户名
-#    token: 7372544890:AAETQj-Ze4mD6yAWXwg30bnw6OnDsd_RIig       # 替换为你的机器人token
-    username: invManageBot  # 替换为你的机器人用户名
-    token: 7647311504:AAH-YWpQ1fAVLpe7HgEjP-uxI2reGfyX-YA       # 替换为你的机器人token
+    username: invLiaoTestBot  # 替换为你的机器人用户名
+    token: 7372544890:AAETQj-Ze4mD6yAWXwg30bnw6OnDsd_RIig       # 替换为你的机器人token
+#    username: invManageBot  # 替换为你的机器人用户名
+#    token: 7647311504:AAH-YWpQ1fAVLpe7HgEjP-uxI2reGfyX-YA       # 替换为你的机器人token
     activation:
-      enabled: false # 是否启用激活码验证，true-启用，false-禁用
+      enabled: true # 是否启用激活码验证，true-启用，false-禁用
     group:
       enabled: true  # 启用群组支持

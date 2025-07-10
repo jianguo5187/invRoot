@@ -37,7 +37,6 @@ public interface ProductTransactionMapper
      * @return 结果
      */
     public int insertProductTransaction(ProductTransaction productTransaction);
-    public int deleteByChatId(Long id);
 
     /**
      * 修改商品出入库记录
@@ -63,7 +62,9 @@ public interface ProductTransactionMapper
      */
     public int deleteProductTransactionByIds(Long[] ids);
 
-    public List<TodayProductTransactionRespVo> selectTodayProductTransactionList(@Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup);
+    public int deleteByChatId(@Param("robotId")String robotId, @Param("chatId")Long chatId);
 
-    public List<TodayProductTransactionRespVo> selectProductTransactionHistoryList(@Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup, @Param("transactionDate")String transactionDate);
+    public List<TodayProductTransactionRespVo> selectTodayProductTransactionList(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup);
+
+    public List<TodayProductTransactionRespVo> selectProductTransactionHistoryList(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup, @Param("transactionDate")String transactionDate);
 }

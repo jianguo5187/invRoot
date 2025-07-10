@@ -61,7 +61,7 @@ public interface ProductPriceMapper
      */
     public int deleteProductPriceByIds(Long[] ids);
 
-    public ProductPrice selectByChatAndProduct(@Param("chatId")Long chatId, @Param("productName")String productName);
+    public ProductPrice selectByChatAndProduct(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("productName")String productName);
 
-    public int deleteByChatId(Long id);
+    public int deleteByChatId(@Param("robotId")String robotId, @Param("chatId")Long chatId);
 }

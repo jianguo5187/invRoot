@@ -104,14 +104,32 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         if (callbackData.startsWith("menu_")) {
             switch (callbackData.substring(5)) {
+//                case "set_price":
+//                    userStates.put(getUserKey(chatId, isGroup), "AWAITING_PRODUCT_PRICE");
+//                    sendResponse(chatId, "请输入商品名称和价格，用逗号分隔\n例如：苹果,5.5");
+//                    break;
                 case "set_price":
                     userStates.put(getUserKey(chatId, isGroup), "AWAITING_PRODUCT_PRICE");
-                    sendResponse(chatId, "请输入商品名称和价格，用逗号分隔\n例如：苹果,5.5");
+                    sendResponse(chatId, "📝 请输入商品定价（可多行，每行一个商品）\n" +
+                            "格式：商品名称,价格\n" +
+                            "示例：\n" +
+                            "苹果，5.5\n" +
+                            "香蕉，3.2\n" +
+                            "牛奶，12.8");
                     break;
                 case "in_out":
                     userStates.put(getUserKey(chatId, isGroup), "AWAITING_PRODUCT_QUANTITY");
-                    sendResponse(chatId, "请输入商品名称和数量(正数入库，负数出库)\n例如：苹果,10 或 苹果,-5");
+                    sendResponse(chatId, "📝 请输入商品入出库记录（可多行，每行一个商品）\n" +
+                            "格式：商品名称，数量（正数入库，负数出库）\n" +
+                            "示例：\n" +
+                            "苹果，10\n" +
+                            "香蕉，-5\n" +
+                            "牛奶，20");
                     break;
+//                case "in_out":
+//                    userStates.put(getUserKey(chatId, isGroup), "AWAITING_PRODUCT_QUANTITY");
+//                    sendResponse(chatId, "请输入商品名称和数量(正数入库，负数出库)\n例如：苹果，10 或 苹果，-5");
+//                    break;
                 case "today_list":
                     handleTodayList(chatId, isGroup);
                     break;
@@ -132,12 +150,13 @@ public class TelegramBotService extends TelegramLongPollingBot {
         }else if (callbackData.startsWith("delete_confirm_")) {
             String action = callbackData.substring(15); // 获取 confirm 或 cancel
             if ("confirm".equals(action)) {
-                boolean success = productService.deleteAllData(chatId, isGroup);
+                boolean success = productService.deleteAllData(botToken, chatId, isGroup);
                 sendResponse(chatId, success ? "✅ 已删除所有商品数据" : "❌ 删除数据失败");
             } else {
                 sendResponse(chatId, "❎ 已取消删除操作");
-                showMainMenu(chatId);
             }
+            userStates.remove(getUserKey(chatId, isGroup));
+            showMainMenu(chatId);
         }
         answerCallbackQuery(callbackQuery.getId());
     }
@@ -147,28 +166,32 @@ public class TelegramBotService extends TelegramLongPollingBot {
         long chatId = update.getMessage().getChatId();
         boolean isGroup = isGroupMessage(update.getMessage());
         String userName = update.getMessage().getFrom().getUserName();
+        // 处理状态输入
+        String userKey = getUserKey(chatId, isGroup);
+        String userState = userStates.get(userKey);
 
         // 处理激活命令
-        if (!isGroup && activationEnabled && messageText.startsWith("/activate")) {
-            handleActivation(chatId, messageText);
+        if (activationEnabled && messageText.startsWith("/activate")) {
+            if(!isUserActivated(chatId)){
+                handleActivation(chatId, isGroup, messageText);
+            }else{
+                showMainMenu(chatId);
+            }
             return;
         }
 
         // 检查激活状态（群组除外）
-        if (!isGroup && activationEnabled && !isUserActivated(chatId)) {
+        if (!StringUtils.equals(userState,"AWAITING_ACTIVATION_CODE") && activationEnabled && !isUserActivated(chatId)) {
             sendResponse(chatId, "🔐 您需要先激活账户才能使用本机器人\n\n请发送 /activate 开始激活流程");
             return;
         }
 
-        // 处理状态输入
-        String userKey = getUserKey(chatId, isGroup);
-        String userState = userStates.get(userKey);
         if (userState != null) {
             switch (userState) {
                 case "AWAITING_ACTIVATION_CODE":
-                    if(!isGroup){
-                        processActivationCode(chatId, messageText);
-                    }
+//                    if(!isGroup){
+                        processActivationCode(chatId, isGroup, messageText);
+//                    }
                     return;
                 case "AWAITING_PRODUCT_PRICE":
                     handleSetPriceInput(chatId, isGroup, messageText, userName);
@@ -195,17 +218,17 @@ public class TelegramBotService extends TelegramLongPollingBot {
         return isGroup ? "group_" + chatId : "user_" + chatId;
     }
 
-    private void handleActivation(long chatId, String message) {
+    private void handleActivation(long chatId, boolean isGroup, String message) {
         String[] parts = message.split(" ");
         if (parts.length == 1) {
-            userStates.put(getUserKey(chatId, false), "AWAITING_ACTIVATION_CODE");
+            userStates.put(getUserKey(chatId, isGroup), "AWAITING_ACTIVATION_CODE");
             sendResponse(chatId, "📝 请输入您的激活码：");
         } else {
-            processActivationCode(chatId, parts[1]);
+            processActivationCode(chatId, isGroup, parts[1]);
         }
     }
 
-    private void processActivationCode(long chatId, String code) {
+    private void processActivationCode(long chatId, boolean isGroup, String code) {
         try {
             SysActivationCode activationCode = activationCodeService.selectByCode(code);
 
@@ -220,6 +243,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 activationCode.setStatus("1");
                 activationCode.setTelegramId(chatId);
                 activationCodeService.updateActivationCode(activationCode);
+                userStates.remove(getUserKey(chatId, isGroup)); // 处理完成后移除状态
                 sendResponse(chatId, "✅ 激活成功！您现在可以使用所有功能了");
                 showMainMenu(chatId);
             }
@@ -229,91 +253,238 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     private void handleSetPriceInput(long chatId, boolean isGroup, String input, String operator) {
-        String[] parts = input.split(",");
         String userKey = getUserKey(chatId, isGroup);
-        if (parts.length != 2) {
-            sendResponse(chatId, "格式错误，请输入：商品名称 价格\n例如：苹果,5.5");
-            // 保持状态不变，等待用户重新输入
+        String[] lines = input.split("\n"); // 按行分割输入
+
+        // 验证至少有一行数据
+        if (lines.length == 0) {
+            sendResponse(chatId, "❌ 请输入至少一个商品定价\n格式：商品名称,价格\n例如：\n苹果，5.5\n西瓜，5.5");
             userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
             return;
         }
 
-        try {
-            String productName = parts[0];
-            double price = Double.parseDouble(parts[1]);
-            boolean success = productService.setProductPrice(chatId, isGroup, productName, price);
-            if (success) {
-                sendResponse(chatId, String.format("✅ 已设置商品【%s】价格为: %.2f", productName, price));
-                userStates.remove(userKey); // 只有成功时才移除状态
-            } else {
-                sendResponse(chatId, "❌ 设置商品价格失败");
-                // 保持状态不变，等待用户重新输入
-                userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
+        StringBuilder successMsg = new StringBuilder();
+        StringBuilder errorMsg = new StringBuilder();
+        int successCount = 0;
+        int errorCount = 0;
+
+        // 处理每一行
+        for (String line : lines) {
+            String[] parts = line.split("，");
+            if (parts.length != 2) {
+                errorMsg.append("❌ 格式错误：").append(line).append(" (需要：商品，价格)\n");
+                errorCount++;
+                continue;
             }
-        } catch (NumberFormatException e) {
-            sendResponse(chatId, "价格必须是数字，例如: 5.5");
-            // 保持状态不变，等待用户重新输入
-            userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
+
+            try {
+                String productName = parts[0].trim();
+                double price = Double.parseDouble(parts[1].trim());
+                boolean success = productService.setProductPrice(botToken, chatId, isGroup, productName, price);
+
+                if (success) {
+                    successMsg.append("✅ ").append(productName).append(": ").append(price).append("\n");
+                    successCount++;
+                } else {
+                    errorMsg.append("❌ 保存失败：").append(line).append("\n");
+                    errorCount++;
+                }
+            } catch (NumberFormatException e) {
+                errorMsg.append("❌ 价格无效：").append(line).append(" (必须是数字)\n");
+                errorCount++;
+            }
         }
+
+        // 构建结果消息
+        StringBuilder response = new StringBuilder();
+        if (successCount > 0) {
+            response.append("成功设置 ").append(successCount).append(" 个商品价格：\n").append(successMsg);
+            userStates.remove(userKey); // 处理完成后移除状态
+        }
+        if (errorCount > 0) {
+            response.append("\n失败 ").append(errorCount).append(" 条：\n").append(errorMsg);
+        }
+
+        sendResponse(chatId, response.toString());
+        showMainMenu(chatId);
+
+//        String[] parts = input.split("，");
+//        if (parts.length != 2) {
+//            sendResponse(chatId, "格式错误，请输入：商品名称 价格\n例如：\n苹果，5.5\n西瓜，5.5");
+//            // 保持状态不变，等待用户重新输入
+//            userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
+//            return;
+//        }
+//
+//        try {
+//            String productName = parts[0];
+//            double price = Double.parseDouble(parts[1]);
+//            boolean success = productService.setProductPrice(botToken, chatId, isGroup, productName, price);
+//            if (success) {
+//                sendResponse(chatId, String.format("✅ 已设置商品【%s】价格为: %.2f", productName, price));
+//                userStates.remove(userKey); // 只有成功时才移除状态
+//            } else {
+//                sendResponse(chatId, "❌ 设置商品价格失败");
+//                // 保持状态不变，等待用户重新输入
+//                userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
+//            }
+//        } catch (NumberFormatException e) {
+//            sendResponse(chatId, "价格必须是数字，例如: 5.5");
+//            // 保持状态不变，等待用户重新输入
+//            userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
+//        }
     }
 
     private void handleInventoryInput(long chatId, boolean isGroup, String input, String operator) {
-        String[] parts = input.split(",");
         String userKey = getUserKey(chatId, isGroup);
-        if (parts.length != 2) {
-            sendResponse(chatId, "格式错误，请输入：商品名称 数量\n例如：苹果,10 或 苹果,-5");
-            // 保持状态不变，等待用户重新输入
+        String[] lines = input.split("\n"); // 按行分割输入
+
+        // 验证至少有一行数据
+        if (lines.length == 0) {
+            sendResponse(chatId, "❌ 请输入至少一条入出库记录\n格式：商品名称，数量\n示例：\n苹果，10\n香蕉，-5");
             userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
             return;
         }
 
-        try {
-            String productName = parts[0];
-            int quantity = Integer.parseInt(parts[1]);
-            String preCheckReuslt = productService.inventoryPreCheck(chatId,isGroup,productName,quantity);
-            if(StringUtils.isNotEmpty(preCheckReuslt)){
-                sendResponse(chatId, "❌ 商品入出库失败：" + preCheckReuslt);
-            }else{
-                boolean success = productService.processInventory(chatId, isGroup, productName, quantity, operator);
-                if (success) {
-                    StringBuilder response = new StringBuilder();
-                    response.append(String.format("✅ 已%s商品【%s】数量: %d\n\n",
-                            quantity > 0 ? "入库" : "出库", productName, Math.abs(quantity)));
+        StringBuilder successMsg = new StringBuilder();
+        StringBuilder errorMsg = new StringBuilder();
+        int successCount = 0;
+        int errorCount = 0;
 
-                    response.append("📋 今日入出库列表:\n");
-                    response.append("品类 | 数量 | 单价 | 总额\n");
-                    List<TodayProductTransactionRespVo> todayList = productService.getTodayTransactions(chatId, isGroup);
-                    Integer todayQtySum = 0;
-                    Double todayAmountSum = 0.00;
-                    for(TodayProductTransactionRespVo t : todayList){
-
-                        response.append(t.getProductName()
-                                + " | "+ t.getQuantity()
-                                + " | " + t.getPrice()
-                                + " | " + t.getTotalAmount()
-                                + "\n");
-
-                        todayQtySum += t.getQuantity();
-                        todayAmountSum += t.getTotalAmount();
-                    }
-                    response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
-                    sendResponse(chatId, response.toString());
-                    userStates.remove(userKey); // 只有成功时才移除状态
-                } else {
-                    sendResponse(chatId, "❌ 商品入出库操作失败");
-                    // 保持状态不变，等待用户重新输入
-                    userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
-                }
+        // 处理每一行
+        for (String line : lines) {
+            String[] parts = line.split("，"); // 使用全角逗号分隔
+            if (parts.length != 2) {
+                errorMsg.append("❌ 格式错误：").append(line).append(" (需要：商品，数量)\n");
+                errorCount++;
+                continue;
             }
-        } catch (NumberFormatException e) {
-            sendResponse(chatId, "数量必须是整数，例如: 10 或 -5");
-            // 保持状态不变，等待用户重新输入
-            userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
+
+            try {
+                String productName = parts[0].trim();
+                double quantity = Double.parseDouble(parts[1].trim());
+
+                // 预检查
+                String preCheckResult = productService.inventoryPreCheck(botToken, chatId, isGroup, productName, quantity);
+                if (StringUtils.isNotEmpty(preCheckResult)) {
+                    errorMsg.append("❌ ").append(productName).append(": ").append(preCheckResult).append("\n");
+                    errorCount++;
+                    continue;
+                }
+
+                // 处理入出库
+                boolean success = productService.processInventory(botToken, chatId, isGroup, productName, quantity, operator);
+                if (success) {
+                    successMsg.append("✅ ").append(productName)
+                            .append(": ").append(quantity > 0 ? "入库" : "出库")
+                            .append(Math.abs(quantity)).append("\n");
+                    successCount++;
+                } else {
+                    errorMsg.append("❌ 操作失败：").append(line).append("\n");
+                    errorCount++;
+                }
+            } catch (NumberFormatException e) {
+                errorMsg.append("❌ 数量无效：").append(line).append(" (必须是数字)\n");
+                errorCount++;
+            }
+
         }
+
+        // 构建结果消息
+        StringBuilder response = new StringBuilder();
+        if (successCount > 0) {
+            response.append("成功处理 ").append(successCount).append(" 条记录：\n").append(successMsg);
+
+            response.append("📋 今日入出库列表:\n");
+            response.append("品类 | 数量 | 单价 | 总额\n");
+            List<TodayProductTransactionRespVo> todayList = productService.getTodayTransactions(botToken, chatId, isGroup);
+            Double todayQtySum = 0.00;
+            Double todayAmountSum = 0.00;
+            for(TodayProductTransactionRespVo t : todayList){
+
+                response.append(String.format("%s | %.2f | %.2f | %.2f\n",
+                        t.getProductName(),
+                        t.getQuantity(),
+                        t.getPrice(),
+                        t.getTotalAmount()));
+//                response.append(t.getProductName()
+//                        + " | "+ t.getQuantity()
+//                        + " | " + t.getPrice()
+//                        + " | " + t.getTotalAmount()
+//                        + "\n");
+
+                todayQtySum += t.getQuantity();
+                todayAmountSum += t.getTotalAmount();
+            }
+            response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
+//            response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
+//            sendResponse(chatId, response.toString());
+            userStates.remove(userKey); // 只有成功时才移除状态
+        }
+
+        if (errorCount > 0) {
+            response.append("\n失败 ").append(errorCount).append(" 条：\n").append(errorMsg);
+        }
+
+        sendResponse(chatId, response.toString());
+        showMainMenu(chatId);
+//        userStates.remove(userKey); // 处理完成后移除状态
+
+//        String[] parts = input.split("，");
+//        if (parts.length != 2) {
+//            sendResponse(chatId, "格式错误，请输入：商品名称，数量\n示例：\n苹果，10\n香蕉，-5");
+//            // 保持状态不变，等待用户重新输入
+//            userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
+//            return;
+//        }
+//
+//        try {
+//            String productName = parts[0];
+//            int quantity = Integer.parseInt(parts[1]);
+//            String preCheckReuslt = productService.inventoryPreCheck(botToken, chatId,isGroup,productName,quantity);
+//            if(StringUtils.isNotEmpty(preCheckReuslt)){
+//                sendResponse(chatId, "❌ 商品入出库失败：" + preCheckReuslt);
+//            }else{
+//                boolean success = productService.processInventory(botToken, chatId, isGroup, productName, quantity, operator);
+//                if (success) {
+//                    StringBuilder response = new StringBuilder();
+//                    response.append(String.format("✅ 已%s商品【%s】数量: %d\n\n",
+//                            quantity > 0 ? "入库" : "出库", productName, Math.abs(quantity)));
+//
+//                    response.append("📋 今日入出库列表:\n");
+//                    response.append("品类 | 数量 | 单价 | 总额\n");
+//                    List<TodayProductTransactionRespVo> todayList = productService.getTodayTransactions(botToken, chatId, isGroup);
+//                    Integer todayQtySum = 0;
+//                    Double todayAmountSum = 0.00;
+//                    for(TodayProductTransactionRespVo t : todayList){
+//
+//                        response.append(t.getProductName()
+//                                + " | "+ t.getQuantity()
+//                                + " | " + t.getPrice()
+//                                + " | " + t.getTotalAmount()
+//                                + "\n");
+//
+//                        todayQtySum += t.getQuantity();
+//                        todayAmountSum += t.getTotalAmount();
+//                    }
+//                    response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
+//                    sendResponse(chatId, response.toString());
+//                    userStates.remove(userKey); // 只有成功时才移除状态
+//                } else {
+//                    sendResponse(chatId, "❌ 商品入出库操作失败");
+//                    // 保持状态不变，等待用户重新输入
+//                    userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
+//                }
+//            }
+//        } catch (NumberFormatException e) {
+//            sendResponse(chatId, "数量必须是整数，例如: 10 或 -5");
+//            // 保持状态不变，等待用户重新输入
+//            userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
+//        }
     }
 
     private void handleTodayList(long chatId, boolean isGroup) {
-        List<TodayProductTransactionRespVo> todayList = productService.getTodayTransactions(chatId, isGroup);
+        List<TodayProductTransactionRespVo> todayList = productService.getTodayTransactions(botToken, chatId, isGroup);
         if (todayList.isEmpty()) {
             sendResponse(chatId, "今日尚无入出库记录");
             return;
@@ -321,20 +492,26 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         StringBuilder response = new StringBuilder("📋 今日入出库列表:\n");
         response.append("品类 | 数量 | 单价 | 总额\n");
-        Integer todayQtySum = 0;
+        Double todayQtySum = 0.00;
         Double todayAmountSum = 0.00;
         for(TodayProductTransactionRespVo t : todayList){
 
-            response.append(t.getProductName()
-                    + " | "+ t.getQuantity()
-                    + " | " + t.getPrice()
-                    + " | " + t.getTotalAmount()
-                    + "\n");
+            response.append(String.format("%s | %.2f | %.2f | %.2f\n",
+                    t.getProductName(),
+                    t.getQuantity(),
+                    t.getPrice(),
+                    t.getTotalAmount()));
+//            response.append(t.getProductName()
+//                    + " | "+ t.getQuantity()
+//                    + " | " + t.getPrice()
+//                    + " | " + t.getTotalAmount()
+//                    + "\n");
 
             todayQtySum += t.getQuantity();
             todayAmountSum += t.getTotalAmount();
         }
-        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
+//        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
+        response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
         sendResponse(chatId, response.toString());
     }
 
@@ -351,7 +528,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             // 进一步验证日期的有效性
             java.time.LocalDate.parse(historyDate);
 
-            List<TodayProductTransactionRespVo> history = productService.getTransactionHistory(chatId, isGroup, historyDate);
+            List<TodayProductTransactionRespVo> history = productService.getTransactionHistory(botToken, chatId, isGroup, historyDate);
             if (history.isEmpty()) {
                 sendResponse(chatId, String.format("日期【%s】尚无入出库记录", historyDate));
                 return;
@@ -359,20 +536,26 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
             StringBuilder response = new StringBuilder(String.format("📜 日期【%s】入出库历史:\n", historyDate));
             response.append("品类 | 数量 | 单价 | 总额\n");
-            Integer todayQtySum = 0;
+            Double todayQtySum = 0.00;
             Double todayAmountSum = 0.00;
             for(TodayProductTransactionRespVo t : history){
 
-                response.append(t.getProductName()
-                        + " | "+ t.getQuantity()
-                        + " | " + t.getPrice()
-                        + " | " + t.getTotalAmount()
-                        + "\n");
+                response.append(String.format("%s | %.2f | %.2f | %.2f\n",
+                        t.getProductName(),
+                        t.getQuantity(),
+                        t.getPrice(),
+                        t.getTotalAmount()));
+//                response.append(t.getProductName()
+//                        + " | "+ t.getQuantity()
+//                        + " | " + t.getPrice()
+//                        + " | " + t.getTotalAmount()
+//                        + "\n");
 
                 todayQtySum += t.getQuantity();
                 todayAmountSum += t.getTotalAmount();
             }
-            response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
+//            response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
+            response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
             sendResponse(chatId, response.toString());
             userStates.remove(userKey); // 查询完成后移除状态
         } catch (java.time.format.DateTimeParseException e) {
@@ -382,7 +565,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     private void handleCurrentStock(long chatId, boolean isGroup) {
-        List<CurrentInventoryRespVo> stockList = productService.getCurrentInventory(chatId, isGroup);
+        List<CurrentInventoryRespVo> stockList = productService.getCurrentInventory(botToken, chatId, isGroup);
         if (stockList.isEmpty()) {
             sendResponse(chatId, "当前没有库存记录");
             return;
@@ -390,20 +573,26 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         StringBuilder response = new StringBuilder("📦 当前库存列表:\n");
         response.append("品类 | 数量 | 单价 | 总额\n");
-        Integer todayQtySum = 0;
+        Double todayQtySum = 0.00;
         Double todayAmountSum = 0.00;
         for(CurrentInventoryRespVo t : stockList){
 
-            response.append(t.getProductName()
-                    + " | "+ t.getQuantity()
-                    + " | " + t.getPrice()
-                    + " | " + t.getTotalAmount()
-                    + "\n");
+            response.append(String.format("%s | %.2f | %.2f | %.2f\n",
+                    t.getProductName(),
+                    t.getQuantity(),
+                    t.getPrice(),
+                    t.getTotalAmount()));
+//            response.append(t.getProductName()
+//                    + " | "+ t.getQuantity()
+//                    + " | " + t.getPrice()
+//                    + " | " + t.getTotalAmount()
+//                    + "\n");
 
             todayQtySum += t.getQuantity();
             todayAmountSum += t.getTotalAmount();
         }
-        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
+//        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");/**/
+        response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
 
         sendResponse(chatId, response.toString());
     }
@@ -433,7 +622,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     private void handleDeleteData(long chatId, boolean isGroup, String operator) {
-        boolean success = productService.deleteAllData(chatId, isGroup);
+        boolean success = productService.deleteAllData(botToken, chatId, isGroup);
         sendResponse(chatId, success ? "✅ 已删除所有商品数据" : "❌ 删除数据失败");
     }
 

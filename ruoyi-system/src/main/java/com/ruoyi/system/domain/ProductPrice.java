@@ -18,6 +18,10 @@ public class ProductPrice extends BaseEntity
     /** 商品定价ID */
     private Long id;
 
+    /** 机器人ID */
+    @Excel(name = "机器人ID")
+    private String robotId;
+
     /** 群组或私聊ID */
     @Excel(name = "群组或私聊ID")
     private Long chatId;
@@ -44,7 +48,23 @@ public class ProductPrice extends BaseEntity
         return id;
     }
 
-    public void setChatId(Long chatId) 
+    public String getRobotId() {
+        return robotId;
+    }
+
+    public void setRobotId(String robotId) {
+        this.robotId = robotId;
+    }
+
+    public Boolean getGroup() {
+        return isGroup;
+    }
+
+    public void setGroup(Boolean group) {
+        isGroup = group;
+    }
+
+    public void setChatId(Long chatId)
     {
         this.chatId = chatId;
     }
@@ -88,6 +108,7 @@ public class ProductPrice extends BaseEntity
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("id", getId())
+            .append("robotId", getRobotId())
             .append("chatId", getChatId())
             .append("isGroup", getIsGroup())
             .append("productName", getProductName())

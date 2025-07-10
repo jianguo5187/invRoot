@@ -6,7 +6,7 @@ public class CurrentInventoryRespVo {
     private String productName;
 
     /** 数量(正数入库，负数出库) */
-    private Integer quantity;
+    private Double quantity;
 
     /** 单价 */
     private Double price;
@@ -22,11 +22,11 @@ public class CurrentInventoryRespVo {
         this.productName = productName;
     }
 
-    public Integer getQuantity() {
+    public Double getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(Integer quantity) {
+    public void setQuantity(Double quantity) {
         this.quantity = quantity;
     }
 

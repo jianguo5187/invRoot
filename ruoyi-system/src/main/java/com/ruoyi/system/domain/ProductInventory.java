@@ -18,6 +18,10 @@ public class ProductInventory extends BaseEntity
     /** 商品库存ID */
     private Long id;
 
+    /** 机器人ID */
+    @Excel(name = "机器人ID")
+    private String robotId;
+
     /** 群组或私聊ID */
     @Excel(name = "群组或私聊ID")
     private Long chatId;
@@ -32,7 +36,7 @@ public class ProductInventory extends BaseEntity
 
     /** 库存数量 */
     @Excel(name = "库存数量")
-    private Integer quantity;
+    private Double quantity;
 
     public void setId(Long id) 
     {
@@ -44,7 +48,23 @@ public class ProductInventory extends BaseEntity
         return id;
     }
 
-    public void setChatId(Long chatId) 
+    public String getRobotId() {
+        return robotId;
+    }
+
+    public void setRobotId(String robotId) {
+        this.robotId = robotId;
+    }
+
+    public Boolean getGroup() {
+        return isGroup;
+    }
+
+    public void setGroup(Boolean group) {
+        isGroup = group;
+    }
+
+    public void setChatId(Long chatId)
     {
         this.chatId = chatId;
     }
@@ -74,12 +94,12 @@ public class ProductInventory extends BaseEntity
         return productName;
     }
 
-    public void setQuantity(Integer quantity) 
+    public void setQuantity(Double quantity)
     {
         this.quantity = quantity;
     }
 
-    public Integer getQuantity() 
+    public Double getQuantity()
     {
         return quantity;
     }
@@ -88,6 +108,7 @@ public class ProductInventory extends BaseEntity
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("id", getId())
+            .append("robotId", getRobotId())
             .append("chatId", getChatId())
             .append("isGroup", getIsGroup())
             .append("productName", getProductName())

@@ -63,8 +63,8 @@ public interface ProductInventoryMapper
      */
     public int deleteProductInventoryByIds(Long[] ids);
 
-    public ProductInventory selectByChatAndProduct(@Param("chatId")Long chatId, @Param("productName")String productName);
-    public int deleteByChatId(Long id);
+    public ProductInventory selectByChatAndProduct(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("productName")String productName);
+    public int deleteByChatId(@Param("robotId")String robotId, @Param("chatId")Long chatId);
 
-    public List<CurrentInventoryRespVo> getCurrentInventory(@Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup);
+    public List<CurrentInventoryRespVo> getCurrentInventory(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup);
 }
