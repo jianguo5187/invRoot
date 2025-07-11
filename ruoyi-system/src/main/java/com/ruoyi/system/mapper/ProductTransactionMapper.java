@@ -67,4 +67,6 @@ public interface ProductTransactionMapper
     public List<TodayProductTransactionRespVo> selectTodayProductTransactionList(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup);
 
     public List<TodayProductTransactionRespVo> selectProductTransactionHistoryList(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup, @Param("transactionDate")String transactionDate);
+
+    public int updateProductTransactionHistoryPrice(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup, @Param("productName")String productName, @Param("price")Double price);
 }

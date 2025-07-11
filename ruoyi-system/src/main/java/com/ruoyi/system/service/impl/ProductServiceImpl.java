@@ -41,7 +41,10 @@ public class ProductServiceImpl implements IProductService {
         if (existing != null) {
             existing.setPrice(price);
             existing.setUpdateTime(new Date());
-            return priceMapper.updateProductPrice(existing) > 0;
+            boolean updateResult =  priceMapper.updateProductPrice(existing) > 0;
+            // 当天价格更新到入出库履历表
+            transactionMapper.updateProductTransactionHistoryPrice(robotId,chatId,isGroup,productName,price);
+            return updateResult;
         } else {
             return priceMapper.insertProductPrice(priceRecord) > 0;
         }
@@ -70,12 +73,15 @@ public class ProductServiceImpl implements IProductService {
         }
 
         // 2. 记录交易
+        // 商品价格
+        ProductPrice productPrice = priceMapper.selectByChatAndProduct(robotId, chatId, productName);
         ProductTransaction transaction = new ProductTransaction();
         transaction.setRobotId(robotId);
         transaction.setChatId(chatId);
         transaction.setIsGroup(isGroup);
         transaction.setProductName(productName);
         transaction.setQuantity(quantity);
+        transaction.setPrice(productPrice.getPrice());
         transaction.setTransactionTime(new Date());
         transaction.setOperator(operator);
         transactionMapper.insertProductTransaction(transaction);

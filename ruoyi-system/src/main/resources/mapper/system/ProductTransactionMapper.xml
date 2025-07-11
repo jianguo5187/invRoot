@@ -11,6 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="isGroup"    column="is_group"    />
         <result property="productName"    column="product_name"    />
         <result property="quantity"    column="quantity"    />
+        <result property="price"    column="price"    />
         <result property="transactionTime"    column="transaction_time"    />
         <result property="operator"    column="operator"    />
         <result property="createBy"    column="create_by"    />
@@ -21,7 +22,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectProductTransactionVo">
-        select id, robot_id, chat_id, is_group, product_name, quantity, transaction_time, operator, create_by, create_time, update_by, update_time, remark from product_transaction
+        select id, robot_id, chat_id, is_group, product_name, quantity, price, transaction_time, operator, create_by, create_time, update_by, update_time, remark from product_transaction
     </sql>
 
     <select id="selectProductTransactionList" parameterType="ProductTransaction" resultMap="ProductTransactionResult">
@@ -32,6 +33,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="isGroup != null "> and is_group = #{isGroup}</if>
             <if test="productName != null  and productName != ''"> and product_name = #{productName} </if>
             <if test="quantity != null "> and quantity = #{quantity}</if>
+            <if test="price != null "> and price = #{price}</if>
             <if test="transactionTime != null "> and transaction_time = #{transactionTime}</if>
             <if test="operator != null  and operator != ''"> and operator = #{operator}</if>
         </where>
@@ -49,6 +51,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="isGroup != null">is_group,</if>
             <if test="productName != null and productName != ''">product_name,</if>
             <if test="quantity != null">quantity,</if>
+            <if test="price != null">price,</if>
             <if test="transactionTime != null">transaction_time,</if>
             <if test="operator != null">operator,</if>
             <if test="createBy != null">create_by,</if>
@@ -60,6 +63,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="isGroup != null">#{isGroup},</if>
             <if test="productName != null and productName != ''">#{productName},</if>
             <if test="quantity != null">#{quantity},</if>
+            <if test="price != null">#{price},</if>
             <if test="transactionTime != null">#{transactionTime},</if>
             <if test="operator != null">#{operator},</if>
             <if test="createBy != null">#{createBy},</if>
@@ -76,6 +80,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="isGroup != null">is_group = #{isGroup},</if>
             <if test="productName != null and productName != ''">product_name = #{productName},</if>
             <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="price != null">price = #{price},</if>
             <if test="transactionTime != null">transaction_time = #{transactionTime},</if>
             <if test="operator != null">operator = #{operator},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
@@ -111,39 +116,39 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         SELECT
             pt.product_name AS product_name
              ,sum( pt.quantity ) AS quantity
-             ,pp.price AS price
-             ,sum( pt.quantity )* pp.price AS total_amount
+             ,pt.price AS price
+             ,sum( pt.quantity )* pt.price AS total_amount
         FROM
             `product_transaction` pt
-        INNER JOIN product_price pp ON pp.robot_id = pt.robot_id
-        AND pp.chat_id = pt.chat_id
-        AND pp.is_group = pt.is_group
-        AND pp.product_name = pt.product_name
-        AND DATE_FORMAT( pt.transaction_time - INTERVAL 12 HOUR, '%y%m%d' ) = DATE_FORMAT( NOW()- INTERVAL 12 HOUR, '%y%m%d' )
+--         INNER JOIN product_price pp ON pp.robot_id = pt.robot_id
+--         AND pp.chat_id = pt.chat_id
+--         AND pp.is_group = pt.is_group
+--         AND pp.product_name = pt.product_name
         WHERE
             pt.robot_id = #{robotId}
         AND pt.chat_id = #{chatId}
         AND pt.is_group = #{isGroup}
+        AND DATE_FORMAT( pt.transaction_time - INTERVAL 12 HOUR, '%y%m%d' ) = DATE_FORMAT( NOW()- INTERVAL 12 HOUR, '%y%m%d' )
         GROUP BY
             pt.robot_id
            ,pt.chat_id
            ,pt.is_group
            ,pt.product_name
-           ,pp.price
+           ,pt.price
     </select>
 
     <select id="selectProductTransactionHistoryList" resultMap="TodayProductTransactionResult">
         SELECT
             pt.product_name AS product_name
              ,sum( pt.quantity ) AS quantity
-             ,pp.price AS price
-             ,sum( pt.quantity )* pp.price AS total_amount
+             ,pt.price AS price
+             ,sum( pt.quantity )* pt.price AS total_amount
         FROM
             `product_transaction` pt
-        INNER JOIN product_price pp ON pp.robot_id = pt.robot_id
-        AND pp.chat_id = pt.chat_id
-        AND pp.is_group = pt.is_group
-        AND pp.product_name = pt.product_name
+--         INNER JOIN product_price pp ON pp.robot_id = pt.robot_id
+--         AND pp.chat_id = pt.chat_id
+--         AND pp.is_group = pt.is_group
+--         AND pp.product_name = pt.product_name
         WHERE
             pt.robot_id = #{robotId}
         AND pt.chat_id = #{chatId}
@@ -154,6 +159,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
            ,pt.chat_id
            ,pt.is_group
            ,pt.product_name
-           ,pp.price
+           ,pt.price
     </select>
+
+    <update id="updateProductTransactionHistoryPrice">
+        UPDATE product_transaction
+        SET price = #{price}
+        where chat_id = #{chatId}
+        and robot_id = #{robotId}
+        and is_group = #{isGroup}
+        and product_name = #{productName}
+        AND DATE_FORMAT(transaction_time - INTERVAL 12 HOUR, '%y%m%d' ) = DATE_FORMAT( NOW()- INTERVAL 12 HOUR, '%y%m%d' )
+    </update>
 </mapper>

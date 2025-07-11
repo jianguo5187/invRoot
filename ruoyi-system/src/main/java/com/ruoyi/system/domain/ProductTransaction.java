@@ -40,6 +40,10 @@ public class ProductTransaction extends BaseEntity
     @Excel(name = "数量(正数入库，负数出库)")
     private Double quantity;
 
+    /** 商品价格 */
+    @Excel(name = "商品价格")
+    private Double price;
+
     /** 交易时间(-12小时)
      * 例如：2025/07/04 12：00~2025/07/05 11：59 算2025/07/04的数据
      * */
@@ -117,6 +121,16 @@ public class ProductTransaction extends BaseEntity
         return quantity;
     }
 
+    public void setPrice(Double price)
+    {
+        this.price = price;
+    }
+
+    public Double getPrice()
+    {
+        return price;
+    }
+
     public void setTransactionTime(Date transactionTime) 
     {
         this.transactionTime = transactionTime;
@@ -146,6 +160,7 @@ public class ProductTransaction extends BaseEntity
             .append("isGroup", getIsGroup())
             .append("productName", getProductName())
             .append("quantity", getQuantity())
+            .append("price", getPrice())
             .append("transactionTime", getTransactionTime())
             .append("operator", getOperator())
             .append("createBy", getCreateBy())
