@@ -120,10 +120,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
              ,sum( pt.quantity )* pt.price AS total_amount
         FROM
             `product_transaction` pt
---         INNER JOIN product_price pp ON pp.robot_id = pt.robot_id
---         AND pp.chat_id = pt.chat_id
---         AND pp.is_group = pt.is_group
---         AND pp.product_name = pt.product_name
         WHERE
             pt.robot_id = #{robotId}
         AND pt.chat_id = #{chatId}
@@ -135,6 +131,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
            ,pt.is_group
            ,pt.product_name
            ,pt.price
+        order by product_name
     </select>
 
     <select id="selectProductTransactionHistoryList" resultMap="TodayProductTransactionResult">
@@ -145,10 +142,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
              ,sum( pt.quantity )* pt.price AS total_amount
         FROM
             `product_transaction` pt
---         INNER JOIN product_price pp ON pp.robot_id = pt.robot_id
---         AND pp.chat_id = pt.chat_id
---         AND pp.is_group = pt.is_group
---         AND pp.product_name = pt.product_name
         WHERE
             pt.robot_id = #{robotId}
         AND pt.chat_id = #{chatId}
@@ -160,6 +153,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
            ,pt.is_group
            ,pt.product_name
            ,pt.price
+        order by product_name
     </select>
 
     <update id="updateProductTransactionHistoryPrice">

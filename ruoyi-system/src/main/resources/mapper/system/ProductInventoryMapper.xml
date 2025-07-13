@@ -107,19 +107,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="getCurrentInventory" resultMap="CurrentInventoryResult">
         SELECT
-            pi.product_name AS product_name
-             ,pi.quantity AS quantity
-             ,pp.price AS price
-             ,pi.quantity * pp.price AS total_amount
+            pt.product_name AS product_name
+             ,sum( pt.quantity ) AS quantity
+             ,pt.price AS price
+             ,sum( pt.quantity )* pt.price AS total_amount
         FROM
-            `product_inventory` pi
-        INNER JOIN product_price pp ON pp.robot_id = pi.robot_id
-        AND pp.chat_id = pi.chat_id
-        AND pp.is_group = pi.is_group
-        AND pp.product_name = pi.product_name
+            `product_transaction` pt
         WHERE
-            pi.robot_id = #{robotId}
-        AND pi.chat_id = #{chatId}
-        AND pi.is_group = #{isGroup}
+            pt.robot_id = #{robotId}
+          AND pt.chat_id = #{chatId}
+          AND pt.is_group = #{isGroup}
+        GROUP BY
+            pt.robot_id
+           ,pt.chat_id
+           ,pt.is_group
+           ,pt.product_name
+           ,pt.price
+        order by product_name
     </select>
 </mapper>

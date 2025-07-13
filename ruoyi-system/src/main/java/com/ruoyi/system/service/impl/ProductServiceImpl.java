@@ -137,17 +137,17 @@ public class ProductServiceImpl implements IProductService {
             return checkResult;
         }
 
-        // 获取当前库存
-        Double nowInvQty = 0.00;
-        ProductInventory inventory = inventoryMapper.selectByChatAndProduct(robotId, chatId, productName);
-        if(inventory != null){
-            nowInvQty = inventory.getQuantity();
-        }
-        Double checkQty = nowInvQty + quantity;
-        if(checkQty.compareTo(0.00) < 0){
-            checkResult = "出库所需库存不足，当前在库数量：" + nowInvQty;
-            return checkResult;
-        }
+//        // 获取当前库存
+//        Double nowInvQty = 0.00;
+//        ProductInventory inventory = inventoryMapper.selectByChatAndProduct(robotId, chatId, productName);
+//        if(inventory != null){
+//            nowInvQty = inventory.getQuantity();
+//        }
+//        Double checkQty = nowInvQty + quantity;
+//        if(checkQty.compareTo(0.00) < 0){
+//            checkResult = "出库所需库存不足，当前在库数量：" + nowInvQty;
+//            return checkResult;
+//        }
 
         return checkResult;
     }

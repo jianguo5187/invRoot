@@ -1,7 +1,17 @@
 <template>
   <div class="app-container home">
     <el-row :gutter="20">
-      <el-col :sm="24" :lg="12" style="padding-left: 20px">
+      <el-col :sm="12" :lg="6" style="padding-left: 20px">
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-plus"
+          size="mini"
+          @click="handleBatchAdd"
+        >批量生成激活码</el-button>
+      </el-col>
+
+      <el-col :sm="12" :lg="6" style="padding-left: 20px">
         <el-button
           type="primary"
           plain
@@ -15,7 +25,7 @@
 </template>
 
 <script>
-import {addActivationCode} from "@/api/system/code";
+import {addActivationCode, batchAddActivationCode} from "@/api/system/code";
 
 export default {
   name: "Index",
@@ -28,6 +38,17 @@ export default {
   methods: {
     goTarget(href) {
       window.open(href, "_blank")
+    },
+     /** 批量新增按钮操作 */
+     handleBatchAdd() {
+      batchAddActivationCode().then(response => {
+        this.$modal.msgSuccess("新增成功")
+        this.$router.push({ path: "/system/code" });
+        // this.getList()
+      })
+      // this.reset()
+      // this.open = true
+      // this.title = "添加系统激活码"
     },
     /** 新增按钮操作 */
     handleAdd() {

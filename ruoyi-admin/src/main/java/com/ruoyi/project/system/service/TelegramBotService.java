@@ -1,7 +1,6 @@
 package com.ruoyi.project.system.service;
 
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.system.domain.ProductTransaction;
 import com.ruoyi.system.domain.SysActivationCode;
 import com.ruoyi.system.domain.vo.CurrentInventoryRespVo;
 import com.ruoyi.system.domain.vo.TodayProductTransactionRespVo;
@@ -93,7 +92,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
         String callbackData = callbackQuery.getData();
         long chatId = callbackQuery.getMessage().getChatId();
         boolean isGroup = isGroupMessage(callbackQuery.getMessage());
-//        String userName = callbackQuery.getFrom().getUserName();
         String userName = "";
         if(isGroup){
             userName = callbackQuery.getMessage().getChat().getTitle();
@@ -110,10 +108,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         if (callbackData.startsWith("menu_")) {
             switch (callbackData.substring(5)) {
-//                case "set_price":
-//                    userStates.put(getUserKey(chatId, isGroup), "AWAITING_PRODUCT_PRICE");
-//                    sendResponse(chatId, "请输入商品名称和价格，用逗号分隔\n例如：苹果,5.5");
-//                    break;
                 case "set_price":
                     userStates.put(getUserKey(chatId, isGroup), "AWAITING_PRODUCT_PRICE");
                     sendResponse(chatId, "📝 请输入商品定价（可多行，每行一个商品）\n" +
@@ -132,10 +126,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
                             "香蕉，-5.6\n" +
                             "牛奶，20.6");
                     break;
-//                case "in_out":
-//                    userStates.put(getUserKey(chatId, isGroup), "AWAITING_PRODUCT_QUANTITY");
-//                    sendResponse(chatId, "请输入商品名称和数量(正数入库，负数出库)\n例如：苹果，10 或 苹果，-5");
-//                    break;
                 case "today_list":
                     handleTodayList(chatId, isGroup);
                     break;
@@ -197,12 +187,24 @@ public class TelegramBotService extends TelegramLongPollingBot {
             return;
         }
 
+        if (messageText.startsWith("DJ")) {
+            handleSetPriceInput(chatId, isGroup, messageText.replace("DJ\n",""), userName);
+            return;
+        } else if (messageText.startsWith("DR")) {
+            handleTodayList(chatId, isGroup);
+            return;
+        } else if (messageText.startsWith("DQKC")) {
+            handleCurrentStock(chatId, isGroup);
+            return;
+        } else if (messageText.startsWith("SCSJ")) {
+            sendDeleteConfirmation(chatId);
+            return;
+        }
+
         if (userState != null) {
             switch (userState) {
                 case "AWAITING_ACTIVATION_CODE":
-//                    if(!isGroup){
-                        processActivationCode(chatId, userName, isGroup, messageText);
-//                    }
+                    processActivationCode(chatId, userName, isGroup, messageText);
                     return;
                 case "AWAITING_PRODUCT_PRICE":
                     handleSetPriceInput(chatId, isGroup, messageText, userName);
@@ -320,32 +322,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         sendResponse(chatId, response.toString());
         showMainMenu(chatId);
-
-//        String[] parts = input.split("，");
-//        if (parts.length != 2) {
-//            sendResponse(chatId, "格式错误，请输入：商品名称 价格\n例如：\n苹果，5.5\n西瓜，5.5");
-//            // 保持状态不变，等待用户重新输入
-//            userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
-//            return;
-//        }
-//
-//        try {
-//            String productName = parts[0];
-//            double price = Double.parseDouble(parts[1]);
-//            boolean success = productService.setProductPrice(botToken, chatId, isGroup, productName, price);
-//            if (success) {
-//                sendResponse(chatId, String.format("✅ 已设置商品【%s】价格为: %.2f", productName, price));
-//                userStates.remove(userKey); // 只有成功时才移除状态
-//            } else {
-//                sendResponse(chatId, "❌ 设置商品价格失败");
-//                // 保持状态不变，等待用户重新输入
-//                userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
-//            }
-//        } catch (NumberFormatException e) {
-//            sendResponse(chatId, "价格必须是数字，例如: 5.5");
-//            // 保持状态不变，等待用户重新输入
-//            userStates.put(userKey, "AWAITING_PRODUCT_PRICE");
-//        }
     }
 
     private void handleInventoryInput(long chatId, boolean isGroup, String input, String operator) {
@@ -420,18 +396,11 @@ public class TelegramBotService extends TelegramLongPollingBot {
                         t.getQuantity(),
                         t.getPrice(),
                         t.getTotalAmount()));
-//                response.append(t.getProductName()
-//                        + " | "+ t.getQuantity()
-//                        + " | " + t.getPrice()
-//                        + " | " + t.getTotalAmount()
-//                        + "\n");
 
                 todayQtySum += t.getQuantity();
                 todayAmountSum += t.getTotalAmount();
             }
             response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
-//            response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
-//            sendResponse(chatId, response.toString());
             userStates.remove(userKey); // 只有成功时才移除状态
         }
 
@@ -441,59 +410,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         sendResponse(chatId, response.toString());
         showMainMenu(chatId);
-//        userStates.remove(userKey); // 处理完成后移除状态
-
-//        String[] parts = input.split("，");
-//        if (parts.length != 2) {
-//            sendResponse(chatId, "格式错误，请输入：商品名称，数量\n示例：\n苹果，10\n香蕉，-5");
-//            // 保持状态不变，等待用户重新输入
-//            userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
-//            return;
-//        }
-//
-//        try {
-//            String productName = parts[0];
-//            int quantity = Integer.parseInt(parts[1]);
-//            String preCheckReuslt = productService.inventoryPreCheck(botToken, chatId,isGroup,productName,quantity);
-//            if(StringUtils.isNotEmpty(preCheckReuslt)){
-//                sendResponse(chatId, "❌ 商品入出库失败：" + preCheckReuslt);
-//            }else{
-//                boolean success = productService.processInventory(botToken, chatId, isGroup, productName, quantity, operator);
-//                if (success) {
-//                    StringBuilder response = new StringBuilder();
-//                    response.append(String.format("✅ 已%s商品【%s】数量: %d\n\n",
-//                            quantity > 0 ? "入库" : "出库", productName, Math.abs(quantity)));
-//
-//                    response.append("📋 今日入出库列表:\n");
-//                    response.append("品类 | 数量 | 单价 | 总额\n");
-//                    List<TodayProductTransactionRespVo> todayList = productService.getTodayTransactions(botToken, chatId, isGroup);
-//                    Integer todayQtySum = 0;
-//                    Double todayAmountSum = 0.00;
-//                    for(TodayProductTransactionRespVo t : todayList){
-//
-//                        response.append(t.getProductName()
-//                                + " | "+ t.getQuantity()
-//                                + " | " + t.getPrice()
-//                                + " | " + t.getTotalAmount()
-//                                + "\n");
-//
-//                        todayQtySum += t.getQuantity();
-//                        todayAmountSum += t.getTotalAmount();
-//                    }
-//                    response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
-//                    sendResponse(chatId, response.toString());
-//                    userStates.remove(userKey); // 只有成功时才移除状态
-//                } else {
-//                    sendResponse(chatId, "❌ 商品入出库操作失败");
-//                    // 保持状态不变，等待用户重新输入
-//                    userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
-//                }
-//            }
-//        } catch (NumberFormatException e) {
-//            sendResponse(chatId, "数量必须是整数，例如: 10 或 -5");
-//            // 保持状态不变，等待用户重新输入
-//            userStates.put(userKey, "AWAITING_PRODUCT_QUANTITY");
-//        }
     }
 
     private void handleTodayList(long chatId, boolean isGroup) {
@@ -514,16 +430,10 @@ public class TelegramBotService extends TelegramLongPollingBot {
                     t.getQuantity(),
                     t.getPrice(),
                     t.getTotalAmount()));
-//            response.append(t.getProductName()
-//                    + " | "+ t.getQuantity()
-//                    + " | " + t.getPrice()
-//                    + " | " + t.getTotalAmount()
-//                    + "\n");
 
             todayQtySum += t.getQuantity();
             todayAmountSum += t.getTotalAmount();
         }
-//        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
         response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
         sendResponse(chatId, response.toString());
     }
@@ -558,16 +468,10 @@ public class TelegramBotService extends TelegramLongPollingBot {
                         t.getQuantity(),
                         t.getPrice(),
                         t.getTotalAmount()));
-//                response.append(t.getProductName()
-//                        + " | "+ t.getQuantity()
-//                        + " | " + t.getPrice()
-//                        + " | " + t.getTotalAmount()
-//                        + "\n");
 
                 todayQtySum += t.getQuantity();
                 todayAmountSum += t.getTotalAmount();
             }
-//            response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");
             response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
             sendResponse(chatId, response.toString());
             userStates.remove(userKey); // 查询完成后移除状态
@@ -595,16 +499,10 @@ public class TelegramBotService extends TelegramLongPollingBot {
                     t.getQuantity(),
                     t.getPrice(),
                     t.getTotalAmount()));
-//            response.append(t.getProductName()
-//                    + " | "+ t.getQuantity()
-//                    + " | " + t.getPrice()
-//                    + " | " + t.getTotalAmount()
-//                    + "\n");
 
             todayQtySum += t.getQuantity();
             todayAmountSum += t.getTotalAmount();
         }
-//        response.append("共计 | " + todayQtySum + " |  | " + todayAmountSum +"\n");/**/
         response.append(String.format("共计 | %.2f |  | %.2f\n", todayQtySum, todayAmountSum));
 
         sendResponse(chatId, response.toString());
@@ -682,6 +580,12 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
     private void sendHelpMessage(long chatId) {
         StringBuilder helpText = new StringBuilder("🆘 帮助菜单\n\n")
+                .append("📌 关键字命令:\n")
+                .append("1. DJ商品，价格  ➔ 商品定价（如：DJ\n苹果，5）\n")
+                .append("2. DR           ➔ 当日列表\n")
+                .append("3. DQKC         ➔ 当前库存\n")
+                .append("4. SCSJ         ➔ 删除数据\n\n")
+                .append("📌 菜单功能:\n")
                 .append("1. 点击【商品定价】设置商品价格\n")
                 .append("2. 点击【商品入出库】管理库存\n")
                 .append("3. 点击【当日列表】查看当天入出库记录\n")
@@ -704,14 +608,17 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     private void sendResponse(long chatId, String text) {
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText(text);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+        int maxLength = 4096;
+        for (int i = 0; i < text.length(); i += maxLength) {
+            String chunk = text.substring(i, Math.min(i + maxLength, text.length()));
+            SendMessage message = new SendMessage();
+            message.setChatId(String.valueOf(chatId));
+            message.setText(chunk);
+            try {
+                execute(message);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
         }
     }
 

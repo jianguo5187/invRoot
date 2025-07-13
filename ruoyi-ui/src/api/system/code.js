@@ -45,6 +45,14 @@ export function delCode(id) {
 
 
 // 新增激活码
+export function batchAddActivationCode(data) {
+  return request({
+    url: '/system/code/batchGenerateActivationCode',
+    method: 'post',
+    data: data
+  })
+}
+// 新增激活码
 export function addActivationCode(data) {
   return request({
     url: '/system/code/generateActivationCode',

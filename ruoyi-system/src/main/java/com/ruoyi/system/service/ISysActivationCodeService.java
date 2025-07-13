@@ -65,5 +65,6 @@ public interface ISysActivationCodeService
     List<SysActivationCode> selectCodeList(SysActivationCode code);
     int insertActivationCode(SysActivationCode code);
     int batchInsert(List<SysActivationCode> codes);
+    public void batchGenerateActivationCode(String userName);
     public int generateActivationCode(String userName);
 }

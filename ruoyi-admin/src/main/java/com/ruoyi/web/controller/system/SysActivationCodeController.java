@@ -106,6 +106,17 @@ public class SysActivationCodeController extends BaseController
     }
 
     /**
+     * 批量生成激活码
+     */
+    @PostMapping("/batchGenerateActivationCode")
+    public AjaxResult batchGenerateActivationCode()
+    {
+        SysUser sessionUser = SecurityUtils.getLoginUser().getUser();
+        sysActivationCodeService.batchGenerateActivationCode(sessionUser.getUserName());
+        return success();
+    }
+
+    /**
      * 生成激活码
      */
     @PostMapping("/generateActivationCode")

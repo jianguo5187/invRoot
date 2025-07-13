@@ -133,6 +133,17 @@ public class SysActivationCodeServiceImpl implements ISysActivationCodeService
     }
 
     @Override
+    public void batchGenerateActivationCode(String userName) {
+        for(int i=0;i<100;i++){
+            SysActivationCode sysActivationCode = new SysActivationCode();
+            sysActivationCode.setCode(generateUnusedCode());
+            sysActivationCode.setCreateBy(userName);
+            sysActivationCode.setCreateTime(DateUtils.getNowDate());
+            sysActivationCodeMapper.insertSysActivationCode(sysActivationCode);
+        }
+    }
+
+    @Override
     public int generateActivationCode(String userName) {
         SysActivationCode sysActivationCode = new SysActivationCode();
         sysActivationCode.setCode(generateUnusedCode());
