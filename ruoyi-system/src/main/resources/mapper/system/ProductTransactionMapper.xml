@@ -124,7 +124,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             pt.robot_id = #{robotId}
         AND pt.chat_id = #{chatId}
         AND pt.is_group = #{isGroup}
-        AND DATE_FORMAT( pt.transaction_time - INTERVAL 12 HOUR, '%y%m%d' ) = DATE_FORMAT( NOW()- INTERVAL 12 HOUR, '%y%m%d' )
+        AND DATE_FORMAT( pt.transaction_time - INTERVAL #{intervalHour} HOUR, '%y%m%d' ) = DATE_FORMAT( NOW()- INTERVAL #{intervalHour} HOUR, '%y%m%d' )
         GROUP BY
             pt.robot_id
            ,pt.chat_id
@@ -146,7 +146,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             pt.robot_id = #{robotId}
         AND pt.chat_id = #{chatId}
         AND pt.is_group = #{isGroup}
-        AND DATE_FORMAT( pt.transaction_time - INTERVAL 12 HOUR, '%Y-%m-%d' ) = #{transactionDate}
+        AND DATE_FORMAT( pt.transaction_time - INTERVAL #{intervalHour} HOUR, '%Y-%m-%d' ) = #{transactionDate}
         GROUP BY
             pt.robot_id
            ,pt.chat_id
@@ -163,6 +163,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         and robot_id = #{robotId}
         and is_group = #{isGroup}
         and product_name = #{productName}
-        AND DATE_FORMAT(transaction_time - INTERVAL 12 HOUR, '%y%m%d' ) = DATE_FORMAT( NOW()- INTERVAL 12 HOUR, '%y%m%d' )
+        AND DATE_FORMAT(transaction_time - INTERVAL #{intervalHour} HOUR, '%y%m%d' ) = DATE_FORMAT( NOW()- INTERVAL #{intervalHour} HOUR, '%y%m%d' )
     </update>
 </mapper>

@@ -64,9 +64,9 @@ public interface ProductTransactionMapper
 
     public int deleteByChatId(@Param("robotId")String robotId, @Param("chatId")Long chatId);
 
-    public List<TodayProductTransactionRespVo> selectTodayProductTransactionList(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup);
+    public List<TodayProductTransactionRespVo> selectTodayProductTransactionList(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup, @Param("intervalHour")Integer intervalHour);
 
-    public List<TodayProductTransactionRespVo> selectProductTransactionHistoryList(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup, @Param("transactionDate")String transactionDate);
+    public List<TodayProductTransactionRespVo> selectProductTransactionHistoryList(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup, @Param("transactionDate")String transactionDate, @Param("intervalHour")Integer intervalHour);
 
-    public int updateProductTransactionHistoryPrice(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup, @Param("productName")String productName, @Param("price")Double price);
+    public int updateProductTransactionHistoryPrice(@Param("robotId")String robotId, @Param("chatId")Long chatId, @Param("isGroup")Boolean isGroup, @Param("productName")String productName, @Param("price")Double price, @Param("intervalHour")Integer intervalHour);
 }

@@ -1,10 +1,12 @@
 package com.ruoyi.system.service.impl;
 
+import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.system.domain.*;
 import com.ruoyi.system.domain.vo.CurrentInventoryRespVo;
 import com.ruoyi.system.domain.vo.TodayProductTransactionRespVo;
 import com.ruoyi.system.mapper.*;
 import com.ruoyi.system.service.IProductService;
+import com.ruoyi.system.service.ISysConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,9 @@ public class ProductServiceImpl implements IProductService {
     @Autowired
     private ProductTransactionMapper transactionMapper;
 
+    @Autowired
+    private ISysConfigService configService;
+
     @Override
     @Transactional
     public boolean setProductPrice(String robotId, Long chatId, Boolean isGroup, String productName, Double price) {
@@ -42,8 +47,9 @@ public class ProductServiceImpl implements IProductService {
             existing.setPrice(price);
             existing.setUpdateTime(new Date());
             boolean updateResult =  priceMapper.updateProductPrice(existing) > 0;
+            Integer intervalHour = Convert.toInt(configService.selectConfigByKey("sys.interval.hour"));
             // 当天价格更新到入出库履历表
-            transactionMapper.updateProductTransactionHistoryPrice(robotId,chatId,isGroup,productName,price);
+            transactionMapper.updateProductTransactionHistoryPrice(robotId,chatId,isGroup,productName,price,intervalHour);
             return updateResult;
         } else {
             return priceMapper.insertProductPrice(priceRecord) > 0;
@@ -91,7 +97,8 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public List<TodayProductTransactionRespVo> getTodayTransactions(String robotId, Long chatId, Boolean isGroup) {
-        return transactionMapper.selectTodayProductTransactionList(robotId, chatId,isGroup);
+        Integer intervalHour = Convert.toInt(configService.selectConfigByKey("sys.interval.hour"));
+        return transactionMapper.selectTodayProductTransactionList(robotId, chatId,isGroup,intervalHour);
     }
 
     @Override
@@ -100,7 +107,8 @@ public class ProductServiceImpl implements IProductService {
 //        searchProductTransaction.setChatId(chatId);
 //        searchProductTransaction.setIsGroup(isGroup);
 //        searchProductTransaction.setProductName(productName);
-        return transactionMapper.selectProductTransactionHistoryList(robotId, chatId,isGroup,historyDate);
+        Integer intervalHour = Convert.toInt(configService.selectConfigByKey("sys.interval.hour"));
+        return transactionMapper.selectProductTransactionHistoryList(robotId, chatId,isGroup,historyDate,intervalHour);
     }
 
     @Override
